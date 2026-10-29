@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Jotly 心迹智析: an AI emotion journal that spots stress and burnout early and suggests ways to unwind.">
+<meta name="theme-color" content="#1f4d47">
+<meta property="og:title" content="Jotly · 心迹智析">
+<meta property="og:description" content="An AI emotion journal that spots stress and burnout early.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22%3E📓%3C/text%3E%3C/svg%3E">
+<title>Jotly · 心迹智析</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,600;1,400&amp;family=Figtree:wght@400;600&amp;display=swap">
+<style>
+:root{--bg:#edf2ef;--card:#fbfdfc;--ink:#16231f;--mut:#5d716b;--pri:#1f4d47;--onpri:#fff;--lamp:#f2a93b;--soft:#dbe7e2;--line:#c9d9d3;--ok:#3f8a6b;--warn:#b57a10;--bad:#c8553d;--serif:"Newsreader","Noto Serif SC",Georgia,serif;--sans:"Figtree",system-ui,"PingFang SC","Microsoft YaHei",sans-serif}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1a17;--card:#17261f;--ink:#e6f0ec;--mut:#9bb0a9;--pri:#7fcdbd;--onpri:#0f1a17;--soft:#1f342d;--line:#2b443b;--ok:#6cc9a0;--warn:#e0a63c;--bad:#ee8a72}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.55 var(--sans)}
+button,input,select,textarea{font:inherit;color:inherit}
+.app{display:flex;min-height:100vh}
+nav{width:216px;padding:28px 18px;display:flex;flex-direction:column;gap:6px;position:sticky;top:0;height:100vh;background:var(--pri);color:var(--onpri)}
+nav h1{font:600 28px var(--serif);margin:0 0 2px}
+nav small{opacity:.75;margin-bottom:22px}
+nav button{background:none;border:0;color:inherit;text-align:left;padding:10px 12px;border-radius:10px;cursor:pointer;opacity:.8}
+nav button.on{background:rgba(255,255,255,.16);opacity:1;font-weight:600}
+.streak{margin-top:auto;background:var(--lamp);color:#3a2705;border-radius:12px;padding:10px 12px;font-weight:600}
+main{flex:1;max-width:760px;padding:40px 32px 80px;margin:0 auto;width:100%}
+h2{font:400 36px/1.15 var(--serif);margin:0 0 6px}
+.sub{color:var(--mut);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:16px}
+.banner{background:var(--soft);border-radius:10px;padding:10px 14px;margin-bottom:20px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.btn{background:var(--pri);color:var(--onpri);border:0;border-radius:99px;padding:10px 22px;cursor:pointer;font-weight:600}
+.btn.alt{background:none;color:var(--pri);border:1px solid var(--pri)}
+.btn:disabled{opacity:.5;cursor:wait}
+:focus-visible{outline:3px solid var(--lamp);outline-offset:2px}
+.moods{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.moods button{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;cursor:pointer;font-size:14px;min-width:64px}
+.moods button span{display:block;font-size:24px;line-height:1.2}
+.moods button.on{border-color:var(--pri);box-shadow:inset 0 0 0 2px var(--pri)}
+.moods button.mood-new{background:none;border-style:dashed;color:var(--mut);font-weight:600}
+.mform{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 14px}
+.mform input[type=text]{width:auto;flex:0 0 auto}
+.mform .memo{width:76px!important;text-align:center;font-size:20px;padding:8px 6px}
+.mform .mlab{flex:1 1 140px;width:auto!important;min-width:120px}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+input[type=date],input[type=text],input[type=password],select{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;width:100%}
+input[type=date]{width:auto}
+textarea{width:100%;min-height:240px;resize:vertical;border:1px solid var(--line);border-radius:14px;padding:20px 22px;background:var(--card);font:20px/1.7 var(--serif);background-image:repeating-linear-gradient(transparent 0 33px,var(--line) 33px 34px);background-attachment:local}
+textarea.sm{min-height:80px;font:17px/1.5 var(--serif);background-image:none;padding:12px 14px}
+.entry{font:19px/1.7 var(--serif);white-space:pre-wrap}
+.bub{padding:12px 16px;border-radius:16px;margin:10px 0;max-width:88%;white-space:pre-wrap}
+.bub.ai{background:var(--soft);border-bottom-left-radius:4px}
+.bub.me{background:var(--pri);color:var(--onpri);margin-left:auto;border-bottom-right-radius:4px}
+.chip{display:inline-block;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:600;background:var(--soft)}
+.muted{color:var(--mut);font-size:14px}
+.chart{display:flex;gap:10px;align-items:flex-end;height:150px;margin:8px 0 4px}
+.chart div{flex:1;text-align:center;display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.chart i{display:block;border-radius:8px 8px 3px 3px;min-height:4px;background:var(--line)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.stats b{font:600 30px var(--serif);display:block}
+.help{border-left:5px solid var(--bad)}
+.stage{position:relative;width:min(300px,80vw);height:300px;margin:20px auto;display:grid;place-items:center}
+.orb{position:absolute;width:170px;height:170px;border-radius:50%;background:radial-gradient(circle at 35% 30%,var(--lamp),var(--pri));opacity:.85}
+.ptxt{position:relative;text-align:center;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.5);font:600 20px var(--serif)}
+.ptxt b{display:block;font-size:38px}
+.relgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.relcard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.relcard:hover{border-color:var(--pri)}
+.relcard .ri{font-size:30px;line-height:1.1}
+.relcard b{font:600 18px var(--serif)}
+.relcard small{color:var(--mut);font-size:13px;line-height:1.45}
+.gstep{border-top:1px solid var(--line);padding:12px 0 4px}
+.gstep:first-of-type{border-top:0}
+.gstep.gwait{opacity:.45}
+.gstep.gd .glab b{text-decoration:line-through;opacity:.7}
+.glab{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:15px;margin-bottom:8px}
+.dots{display:flex;gap:8px;flex-wrap:wrap}
+.dot{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:0}
+.dot.on{background:var(--pri);border-color:var(--pri)}
+.dot:disabled{cursor:not-allowed}
+.rnote{background:var(--soft);border-radius:10px;padding:12px 14px;margin:16px 0 4px;font-weight:600}
+.ntask{display:flex;gap:10px;align-items:flex-start;width:100%;text-align:left;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px;cursor:pointer;font-size:15px;line-height:1.45}
+.ntask.on{background:var(--soft);border-color:var(--pri)}
+.ntask .nbox{flex:0 0 20px;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;color:var(--onpri);margin-top:1px}
+.ntask.on .nbox{background:var(--pri);border-color:var(--pri)}
+/* fortune */
+.ftag{letter-spacing:3px;font-size:11px;font-weight:700;color:var(--mut);text-align:center;margin-bottom:8px;text-transform:uppercase}
+.ftrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:8px 0 4px}
+.fslot{text-align:center}
+.fpos{display:block;font-size:12px;font-weight:700;color:var(--mut);letter-spacing:2px;margin-bottom:8px}
+.fcard{width:104px;height:164px;perspective:800px;cursor:pointer}
+.finner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .6s}
+.fcard.flip .finner{transform:rotateY(180deg);animation:fflip .6s ease}
+@keyframes fflip{from{transform:rotateY(0)}to{transform:rotateY(180deg)}}
+.fface{position:absolute;inset:0;border-radius:12px;backface-visibility:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px;text-align:center}
+.fback{background:repeating-linear-gradient(45deg,#23604f 0 9px,#1b4a3d 9px 18px);border:2px solid var(--lamp);color:var(--lamp);font-size:26px}
+.ffront{background:var(--card);border:2px solid var(--pri);transform:rotateY(180deg);color:var(--ink)}
+.ffront .fem{font-size:26px}
+.ffront h4{margin:6px 0 2px;font-size:13px;font-weight:600}
+.ffront small{font-size:10px;color:var(--mut);letter-spacing:1px}
+.freading{background:var(--soft);border-radius:12px;padding:14px;margin-top:14px}
+.freading .rt{color:var(--warn);font-weight:700;text-align:center;margin-bottom:8px;font-size:14px}
+.freading p{font-size:14px;margin:0 0 8px}
+.fqian{text-align:center}
+.fqian .ftube{background:none;border:0;font-size:46px;cursor:pointer;animation:ftube .55s ease;line-height:1}
+@keyframes ftube{0%,100%{transform:rotate(0)}25%{transform:rotate(-12deg)}55%{transform:rotate(10deg)}80%{transform:rotate(-6deg)}}
+.fqres{margin-top:14px}
+.fno{font-size:24px;font-weight:700;color:var(--warn)}
+.fgrade{display:inline-block;background:rgba(242,169,59,.16);border:1px solid var(--lamp);color:var(--warn);border-radius:16px;padding:2px 16px;font-size:13px;font-weight:700;margin:4px 0 8px}
+.fpoem{font:18px/1.6 var(--serif);letter-spacing:1px;margin:6px 0;color:var(--ink)}
+.fexp{font-size:14px;color:var(--mut);max-width:540px;margin:8px auto 0;text-align:left}
+.fpaper{background:var(--soft);border:1px solid var(--line);border-radius:8px;padding:18px;margin-top:16px;animation:funroll .5s ease}
+@keyframes funroll{from{transform:scaleY(.2);opacity:0}to{transform:scaleY(1);opacity:1}}
+.fograde{font-size:26px;font-weight:800;letter-spacing:6px;text-align:center;color:var(--bad);margin-bottom:10px}
+.fline{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:8px 0;font-size:14px;text-align:left}
+.fline b{white-space:nowrap;color:var(--bad);font-weight:600}
+.fgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.fz{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 4px;cursor:pointer;text-align:center}
+.fz span{display:block;font-size:22px;line-height:1.2}
+.fz small{font-size:11px;color:var(--mut)}
+.fz.on{border-color:var(--pri);box-shadow:inset 0 0 0 1px var(--pri)}
+.fzres{background:var(--soft);border-radius:12px;padding:16px;margin-top:16px;text-align:center}
+.fzname{font-weight:700;color:var(--pri)}
+.fbar{height:8px;border-radius:6px;background:var(--line);max-width:320px;margin:10px auto 0;overflow:hidden}
+.fbar i{display:block;height:100%;background:var(--pri);border-radius:6px;transition:width .8s ease}
+.fich{background:linear-gradient(160deg,#2b2f26,#232820);border-color:#3a4032;color:#e8e2cf}
+.fich .btn{background:linear-gradient(90deg,#d9a441,#f5c96b);color:#4a3208}
+.fich .muted{color:#b9bdac}
+.fcoin{display:inline-block;width:38px;height:38px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f0d9a8,#b8863b);color:#6b4a12;font-weight:800;line-height:38px;margin:0 5px;font-size:13px;opacity:0}
+.fcoin.show{animation:fcoin .45s ease forwards}
+@keyframes fcoin{from{transform:rotateY(90deg) scale(.4);opacity:0}to{transform:none;opacity:1}}
+.flines{max-width:280px;margin:14px auto;min-height:6px}
+.fgline{display:flex;align-items:center;margin:8px 0;opacity:0;animation:fcoin .4s ease forwards}
+.fbar2{flex:1;height:9px;background:#e8c87a;border-radius:4px;position:relative}
+.fbar2.yin::after{content:"";position:absolute;left:38%;right:38%;top:-2px;bottom:-2px;background:#272b22}
+.fgname{font-size:20px;font-weight:800;color:#f5c96b}
+.fgexp{color:#cfc39a;font-size:14px;max-width:520px;margin:8px auto 0}
+.mname{text-align:center;font:600 24px var(--serif);margin:18px 0 6px}
+.mtimer{display:flex;gap:10px;justify-content:center;align-items:center;margin-bottom:12px;min-height:32px}
+.mtimer b{font:600 28px var(--serif);color:var(--pri)}
+.mprog{display:flex;gap:8px;justify-content:center;margin:6px 0 16px}
+.mdt{width:34px;height:6px;border-radius:99px;background:var(--line)}
+.mdt.on{background:var(--pri)}
+.moods .mwrap{position:relative;display:inline-flex}
+.moods button.mdel{position:absolute;top:-7px;right:-7px;min-width:0;width:19px;height:19px;padding:0;border-radius:50%;background:var(--card);border:1px solid var(--line);color:var(--mut);font-size:12px;line-height:1;display:grid;place-items:center;opacity:.85}
+.moods button.mdel:hover{color:var(--bad);border-color:var(--bad);opacity:1}
+ul{padding-left:20px;margin:6px 0}
+.fld{display:block;margin:12px 0 0}
+.fld>span{display:block;font-size:14px;color:var(--mut);margin-bottom:6px}
+.lockbox{text-align:center;padding:28px 22px}
+.lockbox .lbig{font-size:52px;line-height:1.1;margin-bottom:8px}
+.lockbox .fld,.lockbox p{text-align:left;max-width:380px;margin-left:auto;margin-right:auto}
+.errline{color:var(--bad);font-weight:600;font-size:14px;margin:10px auto 0!important}
+.shake{animation:shake .38s}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.gone{display:none}
+.vitem{border-left:4px solid var(--pri)}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--pri);color:var(--onpri);padding:10px 20px;border-radius:99px;font-weight:600;font-size:14px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;z-index:50;max-width:86vw;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.hrow{display:flex;gap:10px;align-items:center;border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.hrow .txt{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:720px){.app{flex-direction:column}nav{width:100%;height:auto;position:sticky;top:0;z-index:5;flex-direction:row;flex-wrap:wrap;padding:10px;gap:2px;align-items:center}nav h1{font-size:20px;margin:0 8px 0 4px}nav small{display:none}nav button{padding:7px 9px;font-size:14px}.streak{margin:0 0 0 auto;padding:4px 10px}main{padding:24px 16px 60px}h2{font-size:30px}.stats{grid-template-columns:1fr}.relgrid{grid-template-columns:1fr}.fgrid{grid-template-columns:repeat(4,1fr)}.fcard{width:88px;height:142px}}
+@media(prefers-reduced-motion:reduce){.orb,.toast{transition:none!important}.shake{animation:none!important}}
+</style></head><body>
+<div class="app"><nav id="nav"></nav><main id="view"></main></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+// ▼▼▼ PASTE YOUR OPENROUTER API KEY BETWEEN THE QUOTES BELOW (e.g. 'sk-or-v1-...') ▼▼▼
+const API_KEY='';
+// ▲▲▲ All AI calls from every visitor are made with this key until its quota runs out, then they are asked for their own. ▲▲▲
+const MODEL='openrouter/free'; // any free model id from openrouter.ai/models (ends in :free)
+const KEY='jotly:v1',URL_='https://openrouter.ai/api/v1/chat/completions';
+const FALL=['openrouter/free','meta-llama/llama-3.3-70b-instruct:free','google/gemma-3-27b-it:free'];
+let S={entries:[],key:'',model:'openrouter/free',lang:'en',report:null,moods:[]};
+try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const T={
+en:{write:'Write',history:'History',report:'Weekly report',breathe:'Relax',settings:'Settings',hw:'How was today?',sw:'Write freely. Jotly will ask a few gentle follow-ups.',ph:'Today I feel…',saveb:'Save and reflect',think:'Jotly is thinking…',reply:'Your reply…',send:'Send',fin:'Finish entry',m1:'Great',m2:'Good',m3:'Okay',m4:'Stressed',m5:'Drained',stress:'Stress',medt:'You seem under pressure. A short breathing or grounding break may help.',medb:'Open relaxation exercises',nokey:'AI is not set up yet: the app owner needs to add an API key in the code.',open:'Open Settings',retry:'Retry',empty:'No entries yet. Write your first one today.',del:'Delete',days:'Days journaled',avg:'Average stress',risk:'Burnout risk',low:'Low',moderate:'Moderate',high:'High',gen:'Generate AI report',rh:'Based on your last 7 days. Stress is scored 0 to 10.',pat:'Patterns',tips:'Suggestions',pro:'Please consider talking to a professional. In Singapore:',inhale:'Breathe in',hold:'Hold',exhale:'Breathe out',start:'Start',stop:'Stop',well:'Well done. Notice how you feel now.',bh:'Take a minute',bs:'Pick a rhythm and follow the circle. Six rounds.',key:'OpenRouter API key',keyh:'Get a free key at openrouter.ai/keys. It stays in this browser and is sent only to OpenRouter.',model:'Model (free models end in :free)',lang:'Language',clear:'Erase all data',conf:'Erase all journal data on this device?',disc:'Jotly is not a medical service. The AI can be wrong, so treat its notes as prompts for reflection.',streak:'day streak',nodata:'Write at least one entry this week to generate a report.',sos:'SOS 24-hour hotline: 1767',imh:'IMH Mental Health Helpline: 6389 2222',emg:'Emergency: 995',cont:'Continue',hist:'History',lang_n:'English',qt:'The shared free AI usage has run out for now. Paste your own free OpenRouter key to keep going.',qt2:'Your key also hit its limit or was rejected. Paste a different OpenRouter key to continue.',qb:'Save key and continue',uk:'Your own OpenRouter key (optional)',vault:'Vault',vsub:'A private space behind your password. Entries here are encrypted on this device and never sent to the AI.',vsetup:'Create a vault password',vsetupNote:'Pick a password you will remember. It is never stored or uploaded, so it cannot be recovered: if you forget it, the private entries stay locked forever.',vpw:'Password',vpw2:'Confirm password',vcreate:'Create vault',vunlock:'Unlock',vlocked:'Vault locked',vlockedSub:'Enter your password to read and write private entries.',vwrong:'Wrong password. Please try again.',vshort:'Use at least 4 characters.',vmismatch:'The two passwords do not match.',vnosub:'This browser cannot encrypt data locally (Web Crypto unavailable). Open the page over https or localhost.',vempty:'No private entries yet.',vadd:'Write a private entry',vaddb:'Save privately',vnote:'Private entries are encrypted and never sent to the AI.',vmove:'Move a journal entry into the vault',vmoveb:'Move in',voutb:'Move out',vlock:'Lock now',vchanged:'Change password',vcur:'Current password',vnew:'New password',vchangeb:'Update password',vpwok:'Password updated.',vautolock:'Locks automatically after 3 minutes of inactivity.',vmoved:'Moved into the vault.',vunmoved:'Moved back to the journal.',vsaved:'Saved.',vnone:'Nothing to move in.',vconfirm:'Move this entry into the vault? It will no longer appear in History or the Weekly report.',vconfirmout:'Move this private entry back to the normal journal?',vdelconf:'Delete this entry?',vlockquit:'Vault locked.',vset:'Vault is set up on this device.',search:'Search entries…',nomatch:'No entries match.',expo:'Export backup (JSON)',expon:'Downloads your journal and the encrypted vault as a JSON file. The API key is never exported.',mo_happy:'Happy',mo_good:'Good',mo_okay:'Okay',mo_sad:'Sad',mo_down:'Upset',mo_angry:'Angry',mo_furious:'Furious',mo_stressed:'Stressed',mo_drained:'Drained',mo_normal:'Normal',mo_excited:'Excited',mo_grateful:'Grateful',mo_calm:'Calm',mo_hopeful:'Hopeful',mo_bored:'Bored',mo_lonely:'Lonely',mo_anxious:'Anxious',mo_overwhelmed:'Overwhelmed',mo_frustrated:'Frustrated',sugt:'You seem under pressure. Something you enjoy might help:',fav:'How do you like to de-stress?',favh:'Pick one or more. When Jotly senses stress, it will suggest one of these.',tryn:'Try it now',newe:'Write a new entry',mnew:'New',memo:'Emoji',mlab:'Mood name',madd:'Add',mlabreq:'Give the mood a name.',cancel:'Cancel',relax:'Relax',rsub:'Pick what fits this moment. Each takes only a few minutes.',rBreath:'Breathing',rBreathSub:'Follow the circle and slow your exhale.',rGround:'5-4-3-2-1 grounding',rGroundSub:'Name what your senses notice to come back to now.',rG1:'5 things you can see',rG2:'4 things you can touch',rG3:'3 things you can hear',rG4:'2 things you can smell',rG5:'1 thing you can taste',rGmsg:'Tap each one you have noticed.',rGdone:'You are back in this moment. Feel your feet on the floor.',rMuscle:'Progressive muscle relaxation',rMuscleSub:'Tense one group for 5 seconds, then let go for 5.',rM1:'Hands and fists',rM2:'Shoulders',rM3:'Face and jaw',rM4:'Stomach',rM5:'Thighs',rM6:'Feet and toes',rTense:'Tense',rRelease:'Release',rSound:'Soundscape',rSoundSub:'Steady sound gives a busy mind something soft to rest on.',rRain:'Rain',rWaves:'Waves',rForest:'Forest stream',rVol:'Volume',rPlaying:'Playing',rNoAudio:'This browser cannot play generated sound.',mdel:'Delete',rMove:'Move a little',rMoveSub:'Four short moves, about three minutes. Follow your own pace.',rMove1:'March in place to warm up',rMove2:'Jumping jacks or high knees',rMove3:'Shoulder and arm stretch',rMove4:'Slow walk to settle your breath',rMoveDone:'Nice work. Notice your heartbeat and your breath.',rNature:'Time in nature',rNatureSub:'A few minutes outside lowers stress. Tap each one when done.',rNat1:'Step outside or open a window and take 3 deep breaths',rNat2:'Find 3 different shades of green',rNat3:'Listen to outdoor sounds for one minute',rNat4:'Look up at the sky or a distant tree for a while',rNatureDone:'You have spent a little time with nature. Carry that openness into today.',fortune:'Fortune',fsub:'A few minutes a day to hear what fortune says about your body and mind. Tarot, sticks, zodiac or I Ching: pick what you believe in.',ftRedraw:'Shuffle again',ftDrawQian:'Tap the tube to draw',ftDrawOmi:'Draw a slip',ftToss:'Toss the coins',ftPast:'Past',ftNow:'Now',ftFuture:'Future',ftInsight:'Reading',ftScore:'Wellbeing index today',ftPickZodiac:'Tap your sign to see today’s guide',ffun:'Fortune content is for fun and reflection only. It is not medical advice.'},
+zh:{write:'写日记',history:'历史',report:'周报告',breathe:'解压',settings:'设置',hw:'今天过得怎么样？',sw:'随心写下今天，Jotly 会温柔地追问几句。',ph:'今天我感觉……',saveb:'保存并回顾',think:'Jotly 正在思考……',reply:'你的回复……',send:'发送',fin:'完成日记',m1:'很棒',m2:'不错',m3:'一般',m4:'压力大',m5:'很疲惫',stress:'压力',medt:'你似乎压力不小，做一次呼吸或感官着陆练习可能会有帮助。',medb:'打开解压练习',nokey:'AI 尚未配置：需要应用所有者在代码中填入 API 密钥。',open:'打开设置',retry:'重试',empty:'还没有日记，今天写下第一篇吧。',del:'删除',days:'记录天数',avg:'平均压力',risk:'倦怠风险',low:'低',moderate:'中',high:'高',gen:'生成 AI 报告',rh:'基于你最近 7 天的记录，压力按 0 到 10 打分。',pat:'观察到的模式',tips:'建议',pro:'建议你咨询专业人士。在新加坡可以联系：',inhale:'吸气',hold:'屏息',exhale:'呼气',start:'开始',stop:'停止',well:'做得好，感受一下现在的状态。',bh:'给自己一分钟',bs:'选择节奏，跟着圆圈呼吸，共六轮。',key:'OpenRouter 密钥',keyh:'可在 openrouter.ai/keys 免费获取。密钥只保存在本浏览器，仅发送给 OpenRouter。',model:'模型（免费模型以 :free 结尾）',lang:'语言',clear:'清除所有数据',conf:'确定清除本设备上的所有日记数据？',disc:'Jotly 不是医疗服务。AI 可能出错，请把它的回应当作反思的提示。',streak:'天连续记录',nodata:'本周至少写一篇日记，才能生成报告。',sos:'SOS 24 小时热线：1767',imh:'IMH 心理健康热线：6389 2222',emg:'紧急情况：995',cont:'继续',hist:'历史',lang_n:'中文',qt:'共享的免费 AI 额度暂时用完了。请填入你自己的免费 OpenRouter 密钥以继续使用。',qt2:'你的密钥也已达到上限或被拒绝，请换一个 OpenRouter 密钥后继续。',qb:'保存密钥并继续',uk:'你自己的 OpenRouter 密钥（可选）',vault:'密码箱',vsub:'一个由密码保护的空间。私密日记会加密保存在本设备，永远不会发送给 AI。',vsetup:'创建密码箱密码',vsetupNote:'请设置一个你能记住的密码。密码不会被保存或上传，也无法找回；一旦忘记，私密日记将永久无法打开。',vpw:'密码',vpw2:'再次输入密码',vcreate:'创建密码箱',vunlock:'解锁',vlocked:'密码箱已锁定',vlockedSub:'输入密码后才能查看和书写私密日记。',vwrong:'密码不正确，请重试。',vshort:'密码至少需要 4 个字符。',vmismatch:'两次输入的密码不一致。',vnosub:'当前浏览器无法在本机加密（Web Crypto 不可用），请通过 https 或 localhost 打开此页面。',vempty:'还没有私密日记。',vadd:'写一篇私密日记',vaddb:'私密保存',vnote:'私密日记经过加密，不会发送给 AI。',vmove:'把日记历史移入密码箱',vmoveb:'移入',voutb:'移出',vlock:'立即锁定',vchanged:'修改密码',vcur:'当前密码',vnew:'新密码',vchangeb:'更新密码',vpwok:'密码已更新。',vautolock:'无操作 3 分钟后自动锁定。',vmoved:'已移入密码箱。',vunmoved:'已移出密码箱。',vsaved:'已保存。',vnone:'没有可移入的日记。',vconfirm:'确定把这篇日记移入密码箱？之后它不会再出现在历史和周报告中。',vconfirmout:'确定把这篇私密日记移回普通日记吗？',vdelconf:'确定删除这篇日记？',vlockquit:'密码箱已锁定。',vset:'本设备已设置密码箱。',search:'搜索日记……',nomatch:'没有匹配的日记。',expo:'导出备份（JSON）',expon:'把日记和加密后的密码箱下载为 JSON 文件。API 密钥不会被导出。',mo_happy:'开心',mo_good:'不错',mo_okay:'一般',mo_sad:'伤心',mo_down:'难过',mo_angry:'生气',mo_furious:'愤怒',mo_stressed:'压力大',mo_drained:'疲惫',mo_normal:'正常',mo_excited:'兴奋',mo_grateful:'感恩',mo_calm:'平静',mo_hopeful:'充满希望',mo_bored:'无聊',mo_lonely:'孤独',mo_anxious:'焦虑',mo_overwhelmed:'不堪重负',mo_frustrated:'沮丧',sugt:'你似乎压力不小，做点喜欢的事或许会有帮助：',fav:'你喜欢用什么方式减压？',favh:'可多选。当 Jotly 察觉到压力时，会从中推荐一种。',tryn:'现在就试试',newe:'写新日记',mnew:'新建',memo:'表情',mlab:'情绪名称',madd:'添加',mlabreq:'请填写情绪名称。',cancel:'取消',relax:'解压',rsub:'选一个适合此刻的方式，每种只要几分钟。',rBreath:'呼吸练习',rBreathSub:'跟着圆圈呼吸，把呼气放慢一点。',rGround:'5-4-3-2-1 感官着陆',rGroundSub:'说出感官注意到的东西，把自己带回此刻。',rG1:'看见的 5 样东西',rG2:'能触摸到的 4 样东西',rG3:'听得见的 3 种声音',rG4:'闻得到的 2 种气味',rG5:'尝得到的 1 种味道',rGmsg:'每注意到一样，就点一下。',rGdone:'你已经回到此刻。感受双脚踩在地板上的踏实。',rMuscle:'渐进式肌肉放松',rMuscleSub:'一组肌肉绷紧 5 秒，再松开 5 秒。',rM1:'双手与拳头',rM2:'肩膀',rM3:'面部与下巴',rM4:'腹部',rM5:'大腿',rM6:'双脚与脚趾',rTense:'绷紧',rRelease:'放松',rSound:'环境音',rSoundSub:'稳定的声音，让忙碌的大脑有个柔软的落脚点。',rRain:'雨声',rWaves:'海浪',rForest:'林间溪流',rVol:'音量',rPlaying:'播放中',rNoAudio:'当前浏览器无法播放生成的声音。',mdel:'删除',rMove:'动一动',rMoveSub:'四个小动作，大约三分钟，跟着自己的节奏来。',rMove1:'原地踏步热身',rMove2:'开合跳或高抬腿',rMove3:'肩颈与手臂拉伸',rMove4:'慢走平复呼吸',rMoveDone:'做得不错，感受一下心跳和呼吸。',rNature:'亲近自然',rNatureSub:'在户外待几分钟就能降低压力，做到一项就点一下。',rNat1:'出门或走到窗边，深呼吸 3 次',rNat2:'找到 3 种不同的绿色',rNat3:'安静听 1 分钟户外的声音',rNat4:'抬头看看天空或远处的树',rNatureDone:'你已经在自然里待了一会儿，把这份开阔带回今天。',fortune:'运势',fsub:'每天几分钟，听听运势给身心的悄悄话。塔罗、灵签、星座、周易——选你信的那一个，为今天讨个好兆头。',ftRedraw:'重新洗牌',ftDrawQian:'点击签筒摇签',ftDrawOmi:'抽一支神签',ftToss:'摇卦',ftPast:'过去',ftNow:'现在',ftFuture:'未来',ftInsight:'牌阵启示',ftScore:'今日身心指数',ftPickZodiac:'点击你的星座，查看今天的身心指引',ffun:'运势内容仅供娱乐与自我反思，不构成医学建议 · 真正守护你的，是好好吃饭、好好睡觉、好好生活。'}};
+const t=k=>T[S.lang][k]||k;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+const today=()=>iso(new Date());
+const OLD_MO=['😄','🙂','😐','😟','😢'];
+const MOODS=[
+ {e:'😄',k:'mo_happy',s:1},
+ {e:'😢',k:'mo_sad',s:6},
+ {e:'😰',k:'mo_anxious',s:7},
+ {e:'🤯',k:'mo_overwhelmed',s:8},
+ {e:'😟',k:'mo_stressed',s:7},
+ {e:'😠',k:'mo_angry',s:7},
+ {e:'😐',k:'mo_normal',s:3}
+];
+const OLD_S={mo_good:3,mo_okay:5,mo_down:7,mo_furious:8,mo_drained:8,mo_excited:2,mo_grateful:1,mo_calm:1,mo_hopeful:2,mo_bored:4,mo_lonely:6,mo_frustrated:6};
+const METH={meditation:['🧘','Meditation','冥想'],music:['🎧','Music','听音乐'],social:['📱','Social media','社交媒体'],friends:['💬','Chat with friends','和朋友聊天'],exercise:['🏃','Exercise','运动'],nature:['🌳','Nature','亲近自然']};
+const LINK={music:['https://open.spotify.com/','Spotify'],social:['https://www.tiktok.com/','TikTok'],friends:['https://web.wechat.com/','WeChat']};
+const INAPP={meditation:'breath',exercise:'move',nature:'nature'};
+const DEF={meditation:['Take a one-minute breathing break.','做一分钟的呼吸练习。'],music:['Put on a calming playlist for ten minutes.','听十分钟舒缓的音乐。'],social:['Scroll something light and fun for a few minutes, then put the phone down.','刷几分钟轻松有趣的内容，然后放下手机。'],friends:['Reach out to a friend and chat for a while.','找个朋友聊聊天吧。'],exercise:['Do a short, gentle movement break.','做一组简短舒缓的动作。'],nature:['Step outside for fresh air and some greenery.','出门透透气，看看绿色。']};
+const favs=()=>S.favs&&S.favs.length?S.favs:['meditation'];
+const allMoods=scope=>[...MOODS,...(scope==='v'?vMoods:(S.moods||[]))];
+function moodInfo(m,lang){
+  const L=lang||S.lang;
+  if(typeof m==='number')return{e:OLD_MO[m]||'🙂',l:T[L]['m'+(m+1)]||''};
+  if(!m||!m.e)return{e:'🙂',l:T[L].mo_good};
+  if(m.k)return{e:m.e,l:T[L][m.k]||m.l||''};
+  return{e:m.e,l:m.l||''};
+}
+function moodStress(m){
+  if(typeof m==='number')return[1,3,5,7,8][m]??5;
+  if(m&&m.k){const p=MOODS.find(x=>x.k===m.k);if(p)return p.s;if(OLD_S[m.k]!=null)return OLD_S[m.k]}
+  return 5;
+}
+function selIndex(sel,scope){
+  const a=allMoods(scope);
+  const i=a.findIndex(m=>sel&&sel.k?m.k===sel.k:!!sel&&m.e===sel.e&&m.l===sel.l);
+  return i<0?2:i;
+}
+function moodRow(scope,sel){
+  const a=allMoods(scope),idx=selIndex(sel,scope);
+  return `<div class="moods" id="moodrow-${scope}" role="group">${a.map((m,i)=>{const d=moodInfo(m);
+    const b=`<button data-i="${i}" class="${i===idx?'on':''}" onclick="pickMood(${i},'${scope}')"><span>${esc(d.e)}</span>${esc(d.l)}</button>`;
+    return i<MOODS.length?b:`<span class="mwrap">${b}<button class="mdel" title="${t('mdel')}" aria-label="${t('mdel')}" onclick="delMood(${i},'${scope}')">×</button></span>`}).join('')}<button class="mood-new" onclick="toggleMoodForm('${scope}')">＋ ${t('mnew')}</button></div>
+  <div class="mform gone" id="mform-${scope}">
+    <input type="text" class="memo" id="memo-${scope}" maxlength="8" placeholder="🙂" aria-label="${t('memo')}">
+    <input type="text" class="mlab" id="mlab-${scope}" maxlength="12" placeholder="${t('mlab')}" aria-label="${t('mlab')}" onkeydown="if(event.key==='Enter')addMood('${scope}')">
+    <button class="btn" onclick="addMood('${scope}')">${t('madd')}</button>
+    <button class="btn alt" onclick="toggleMoodForm('${scope}')">${t('cancel')}</button>
+  </div>`;
+}
+function pickMood(i,scope){
+  const m=allMoods(scope)[i];if(!m)return;
+  const v=m.k?{e:m.e,k:m.k}:{e:m.e,l:m.l};
+  if(scope==='v')vMood=v;else mood=v;
+  document.querySelectorAll('#moodrow-'+scope+' button[data-i]').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+}
+function toggleMoodForm(scope){
+  const f=$('#mform-'+scope);if(!f)return;
+  f.classList.toggle('gone');
+  if(!f.classList.contains('gone'))$('#memo-'+scope).focus();
+}
+async function addMood(scope){
+  const e=$('#memo-'+scope).value.trim()||'🙂';
+  const l=$('#mlab-'+scope).value.trim();
+  if(!l){toast(t('mlabreq'));return}
+  const m={e,l:l.slice(0,12)};
+  if(scope==='v'){
+    if(!vMoods.some(x=>x.e===m.e&&x.l===m.l))vMoods.push(m);
+    vMood={e:m.e,l:m.l};await persistVault();
+  }else{
+    S.moods=S.moods||[];
+    if(!S.moods.some(x=>x.e===m.e&&x.l===m.l))S.moods.push(m);
+    mood={e:m.e,l:m.l};save();
+  }
+  render();toast(t('vsaved'));
+}
+function delMood(i,scope){
+  const m=allMoods(scope)[i];
+  if(!m||m.k)return;
+  if(scope==='v'){
+    vMoods=vMoods.filter(x=>!(x.e===m.e&&x.l===m.l));
+    if(vMood&&vMood.e===m.e&&vMood.l===m.l)vMood={e:'😐',k:'mo_normal'};
+    persistVault();
+  }else{
+    S.moods=(S.moods||[]).filter(x=>!(x.e===m.e&&x.l===m.l));
+    if(mood&&mood.e===m.e&&mood.l===m.l)mood={e:'😐',k:'mo_normal'};
+    save();
+  }
+  render();
+}
+const sc=s=>s>=7?'var(--bad)':s>=5?'var(--warn)':'var(--ok)';
+let tab='write',cur=null,busy=false,mood={e:'😐',k:'mo_normal'},run=0,pat='box',draft=S.draft||'',dT=null;
+let tT=null;
+let rel='home',gP=[0,0,0,0,0],mRun=0,mI=0,mPh='',mLeft=0,snd=null,sVol=.6;
+let mvRun=0,mvI=0,mvLeft=0,ntDone=[false,false,false,false];
+function toast(m){const el=$('#toast');if(!el)return;el.textContent=m;el.classList.add('on');clearTimeout(tT);tT=setTimeout(()=>el.classList.remove('on'),2200)}
+function onDraft(v){draft=v;S.draft=v;clearTimeout(dT);dT=setTimeout(save,400)}
+
+function streak(){const ds=new Set(S.entries.map(e=>e.date));let d=new Date(),n=0;if(!ds.has(iso(d)))d.setDate(d.getDate()-1);while(ds.has(iso(d))){n++;d.setDate(d.getDate()-1)}return n}
+
+/* ---------- vault: password-protected, AES-GCM encrypted in this browser ---------- */
+const VKEY='jotly:vault:v1',ITER=210000;
+const enc=new TextEncoder(),dec=new TextDecoder();
+const b64=b=>{let s='';const u=new Uint8Array(b);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const canCrypt=()=>!!(window.crypto&&crypto.subtle&&crypto.getRandomValues);
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+async function dk(pw,salt){
+  const k=await crypto.subtle.importKey('raw',enc.encode(pw),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2',salt,iterations:ITER,hash:'SHA-256'},k,{name:'AES-GCM',length:256},false,['encrypt','decrypt']);
+}
+const vMeta=()=>{try{return JSON.parse(localStorage.getItem(VKEY)||'null')}catch(e){return null}};
+let vKey=null,vEntries=[],vMoods=[],vSalt='',vErr='',vTimer=null,vMood={e:'😐',k:'mo_normal'},vDraft='';
+function armLock(){clearTimeout(vTimer);if(vKey)vTimer=setTimeout(()=>lockVault(),180000)}
+function lockVault(){
+  const wasVault=tab==='vault';
+  vKey=null;vEntries=[];vMoods=[];vSalt='';vErr='';vDraft='';clearTimeout(vTimer);
+  if(wasVault){render();toast(t('vlockquit'))}
+  else{const b=document.querySelector('#nav button[data-k="vault"]');if(b)b.textContent='🔒 '+t('vault')}
+}
+async function persistVault(){
+  if(!vKey)return;
+  try{
+    const iv=rnd(12),ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},vKey,enc.encode(JSON.stringify({es:vEntries,ms:vMoods})));
+    localStorage.setItem(VKEY,JSON.stringify({v:1,salt:vSalt,iv:b64(iv),ct:b64(ct)}));
+  }catch(e){toast('⚠️ '+e.message)}
+}
+async function createVault(){
+  if(!canCrypt()){vErr='vnosub';return render()}
+  const p=$('#vpw').value,p2=$('#vpw2').value;
+  if(p.length<4){vErr='vshort';return render()}
+  if(p!==p2){vErr='vmismatch';return render()}
+  vSalt=b64(rnd(16));vKey=await dk(p,unb64(vSalt));vEntries=[];vMoods=[];
+  await persistVault();vErr='';armLock();render();
+}
+async function unlockVault(){
+  const m=vMeta(),pw=$('#vpw').value;if(!m||!pw)return;
+  try{
+    const key=await dk(pw,unb64(m.salt));
+    const pt=await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(m.iv)},key,unb64(m.ct));
+    const d=JSON.parse(dec.decode(pt));
+    vEntries=Array.isArray(d)?d:(d.es||[]);
+    vMoods=Array.isArray(d)?[]:(d.ms||[]);
+    vKey=key;vSalt=m.salt;vErr='';armLock();render();
+  }catch(e){vErr='vwrong';render()}
+}
+async function changeVaultPw(){
+  const cur=$('#vcur').value,nw=$('#vnew').value,m=vMeta();
+  if(nw.length<4){vErr='vshort';return render()}
+  try{
+    const old=await dk(cur,unb64(m.salt));
+    await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(m.iv)},old,unb64(m.ct));
+  }catch(e){vErr='vwrong';return render()}
+  vSalt=b64(rnd(16));vKey=await dk(nw,unb64(vSalt));
+  await persistVault();vErr='';render();toast(t('vpwok'));
+}
+async function addPrivate(){
+  const text=$('#vtx').value.trim();if(!text)return;
+  vEntries.push({id:Date.now(),date:$('#vdt').value||today(),mood:vMood,text});
+  vDraft='';vMood={e:'😐',k:'mo_normal'};await persistVault();armLock();render();toast(t('vsaved'));
+}
+async function delPrivate(id){
+  if(!confirm(t('vdelconf')))return;
+  vEntries=vEntries.filter(e=>e.id!==id);await persistVault();render();
+}
+async function moveIn(id){
+  const e=S.entries.find(x=>x.id===id);if(!e||!vKey)return;
+  if(!confirm(t('vconfirm')))return;
+  S.entries=S.entries.filter(x=>x.id!==id);
+  vEntries.push({id:e.id,date:e.date,mood:e.mood,text:e.text});
+  save();await persistVault();render();toast(t('vmoved'));
+}
+async function moveOut(id){
+  const e=vEntries.find(x=>x.id===id);if(!e)return;
+  if(!confirm(t('vconfirmout')))return;
+  vEntries=vEntries.filter(x=>x.id!==id);
+  S.entries.push({id:e.id,date:e.date,mood:e.mood,text:e.text,thread:[],stress:null,emotion:'',meditate:false,err:''});
+  save();await persistVault();render();toast(t('vunmoved'));
+}
+document.addEventListener('click',()=>{if(vKey)armLock()},true);
+document.addEventListener('keydown',()=>{if(vKey)armLock()},true);
+function exportData(){
+  const blob=new Blob([JSON.stringify({app:'Jotly',exported:new Date().toISOString(),lang:S.lang,entries:S.entries,report:S.report,vault:vMeta()},null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='jotly-backup-'+today()+'.json';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);toast(t('expo'));
+}
+
+/* ---------- AI ---------- */
+async function ai(prompt){
+  const key=S.userKey||API_KEY;
+  if(!key)throw new Error('quota');
+  const models=[MODEL,...FALL].filter((m,i,a)=>m&&a.indexOf(m)===i);let err,quota=false;
+  for(const m of models){
+    try{
+      const r=await fetch(URL_,{method:'POST',headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','X-Title':'Jotly'},body:JSON.stringify({model:m,messages:prompt,temperature:0.6})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){const x=new Error(d.error&&d.error.message||('HTTP '+r.status));x.q=[401,402,429].includes(r.status)||/rate.?limit|quota|credit|per.?day/i.test(x.message);throw x}
+      const c=d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content;
+      if(!c)throw new Error('Empty reply');
+      return c;
+    }catch(e){err=e;if(e.q)quota=true}
+  }
+  if(quota)throw new Error('quota');
+  throw err;
+}
+function pj(s){const a=s.indexOf('{'),b=s.lastIndexOf('}');try{return JSON.parse(s.slice(a,b+1))}catch(e){return null}}
+const num=v=>{const n=parseFloat(v);return isFinite(n)?Math.max(0,Math.min(10,Math.round(n))):null};
+const findStress=r=>{const m=r.match(/stress[^0-9\n]{0,20}(\d+(?:\.\d+)?)/i)||r.match(/(\d+(?:\.\d+)?)\s*\/\s*10/);return m?num(m[1]):null};
+const hasZh=s=>/[\u4e00-\u9fff]/.test(s||'');
+const isZh=txt=>S.lang==='zh'||hasZh(txt);
+const cl=r=>r.replace(/<think>[\s\S]*?<\/think>/g,'').replace(/```(?:json)?/g,'');
+const mine=e=>e.text+' '+e.thread.filter(x=>x.r==='me').map(x=>x.t).join(' ');
+const ZHFIX='请只用简体中文重新回答：所有文字内容（emotion、remark、message 等）都必须是中文，保持相同的 JSON 格式，只输出 JSON。';
+
+function build(e){
+  const closing=e.thread.filter(x=>x.r==='me').length>=3,zh=isZh(mine(e)),fv=favs();
+  const lang=zh?'LANGUAGE RULE (critical): write the emotion, remark, message and suggestion values ONLY in Simplified Chinese (简体中文), even though these instructions are in English. 所有文字内容必须使用简体中文。Keep the JSON keys and the method id in English.':'LANGUAGE RULE: write in English.';
+  const ex=zh?'{"stress":7,"emotion":"不堪重负","remark":"你的压力大约是 7/10，主要来自堆积的截止日期。","message":"听起来真的很累。今天哪一部分最消耗你？","method":"music","suggestion":"戴上耳机，听十分钟舒缓的音乐，让紧绷的肩膀放松下来。"}':'{"stress":7,"emotion":"overwhelmed","remark":"Your stress is around 7/10, mainly from the deadline pile-up.","message":"That sounds heavy. What part of the day drained you most?","method":"music","suggestion":"Put on a calming playlist for ten minutes and let your shoulders drop."}';
+  const sys='You are Jotly, a warm journaling companion for people facing burnout.\n'+lang+'\nRead the diary and the conversation so far, then reply with ONE JSON object and nothing else (no markdown, no code fences). Format example:\n'+ex+'\nAll seven fields are REQUIRED in every reply:\n- stress: an integer from 0 (calm) to 10 (severe burnout), judged from the whole diary and conversation. Never omit it; never use words or ranges.\n- emotion: one or two words.\n- remark: one sentence telling the user their stress level and the main reason for it.\n- message: 1-3 sentences of brief empathy'+(closing?', then a warm wrap-up with NO question.':', then ONE gentle open follow-up question.')+'\n- method: if stress is 6 or higher, exactly ONE id from the user\'s preferred de-stress list ['+fv.join(', ')+'] that best fits their situation (if the diary shows that activity is part of the stress, pick another id from the list); otherwise an empty string. Ids: meditation = a guided breathing exercise in this app, music = Spotify, social = TikTok, friends = chatting with friends on WeChat, exercise = a short movement routine in this app, nature = a short outdoor break.\n- suggestion: if method is set, one short, kind, specific sentence recommending that activity; otherwise an empty string.\nYou are not a therapist and never diagnose. If the user mentions self-harm or hopelessness, kindly urge them to reach out to someone they trust or a helpline.\n'+lang;
+  const msgs=[{role:'user',content:sys+'\n\nDate: '+e.date+'\nMood: '+moodInfo(e.mood,'en').l+'\nDiary: '+e.text}];
+  e.thread.forEach(x=>msgs.push({role:x.r==='ai'?'assistant':'user',content:x.t}));
+  return msgs;
+}
+async function turn(e){
+  busy=true;e.err='';render();
+  try{
+    const msgs=build(e),zh=isZh(mine(e));
+    let clean=cl(await ai(msgs)),j=pj(clean)||{};
+    if(zh&&!hasZh(String(j.message||'')+String(j.remark||''))){
+      try{const c2=cl(await ai([...msgs,{role:'assistant',content:clean},{role:'user',content:ZHFIX}])),j2=pj(c2);if(j2&&hasZh(String(j2.message||'')+String(j2.remark||''))){clean=c2;j=j2}}catch(_){}
+    }
+    let st=num(j.stress);if(st==null)st=findStress(clean);
+    if(st==null){try{const q=await ai([{role:'user',content:'Rate the stress and burnout level in this diary from 0 (calm) to 10 (severe). Reply with ONLY one integer.\n\n'+mine(e)}]);st=num((q.match(/\d+(?:\.\d+)?/)||[])[0])}catch(_){}}
+    if(st==null)st=e.stress!=null?e.stress:moodStress(e.mood);
+    e.stress=st;
+    if(j.emotion)e.emotion=String(j.emotion);
+    e.remark=j.remark?String(j.remark):(zh?'估计压力水平：'+st+'/10。':'Estimated stress level: '+st+'/10.');
+    e.thread.push({r:'ai',t:String(j.message||clean.replace(/\{[\s\S]*\}/,'').trim()||clean.trim())});
+    e.method='';e.sug='';
+    if(st>=6){const f=favs();let m=String(j.method||'').trim().toLowerCase();if(!f.includes(m))m=f[Math.floor(Math.random()*f.length)];e.method=m;e.sug=j.suggestion?String(j.suggestion):DEF[m][zh?1:0]}
+  }catch(x){e.err=x.message==='quota'?'quota':x.message}
+  busy=false;save();render();
+}
+function sugCard(e){
+  const m=e.method||(e.meditate?'meditation':'');if(!m||!METH[m])return'';
+  const L=S.lang==='zh'?2:1,txt=e.sug||DEF[m][L-1];
+  const btn=LINK[m]?`<button class="btn" onclick="openM('${m}')">${(L===2?'打开 ':'Open ')+LINK[m][1]}</button>`:`<button class="btn" onclick="tryM('${m}')">${t('tryn')}</button>`;
+  return `<div class="card" style="border-left:5px solid var(--lamp)"><p style="margin-top:0" class="muted">${t('sugt')}</p><p style="margin:0 0 12px;font:19px/1.5 var(--serif)">${METH[m][0]} <b>${METH[m][L]}</b><br>${esc(txt)}</p><p class="row" style="margin:0">${btn}<button class="btn alt" onclick="go('breathe')">${t('medb')}</button></p></div>`;
+}
+function openM(m){window.open(LINK[m][0],'_blank','noopener')}
+function tryM(m){go('breathe');openRel(INAPP[m])}
+function togFav(k){const f=[...favs()],i=f.indexOf(k);if(i>=0){if(f.length===1)return;f.splice(i,1)}else f.push(k);S.favs=f;save();render()}
+function keyPrompt(act){return `<div class="card" style="border-left:5px solid var(--lamp)"><p style="margin-top:0">${t(S.userKey?'qt2':'qt')}</p><input type="password" id="uk" placeholder="sk-or-v1-…" autocomplete="off"><p class="row"><button class="btn" onclick="saveUK('${act}')">${t('qb')}</button></p><p class="muted">${t('keyh')}</p></div>`}
+function saveUK(act){const v=$('#uk').value.trim();if(!v)return;S.userKey=v;save();act==='turn'?retry():genReport()}
+
+/* ---------- views ---------- */
+function vWrite(){
+  const e=S.entries.find(x=>x.id===cur);
+  if(!e){
+    return `<h2>${t('hw')}</h2><p class="sub">${t('sw')}</p>
+    <div class="row"><input type="date" id="dt" value="${today()}" aria-label="date"></div>
+    ${moodRow('w',mood)}
+    <textarea id="txt" placeholder="${t('ph')}" oninput="onDraft(this.value)">${esc(draft)}</textarea>
+    <p><button class="btn" onclick="submit()">${t('saveb')}</button></p>`;
+  }
+  const replies=e.thread.filter(x=>x.r==='me').length;
+  const last=e.thread[e.thread.length-1];
+  const canReply=!busy&&!e.err&&!e.done&&last&&last.r==='ai'&&replies<3;
+  return `<h2>${esc(moodInfo(e.mood).e)} ${esc(e.date)}</h2>
+  <div class="card"><div class="entry">${esc(e.text)}</div></div>
+  ${e.thread.map(x=>`<div class="bub ${x.r}">${esc(x.t)}</div>`).join('')}
+  ${busy?`<p class="muted">${t('think')}</p>`:''}
+  ${e.err==='quota'?keyPrompt('turn'):e.err?`<div class="banner"><span>${esc(e.err)}</span><button class="btn alt" onclick="retry()">${t('retry')}</button></div>`:''}
+  ${e.done&&e.stress!=null?`<div class="card" style="border-left:5px solid ${sc(e.stress)}"><b>${t('stress')} ${e.stress}/10</b> <span class="muted">· ${esc(e.emotion||'')}</span>${e.remark?`<div>${esc(e.remark)}</div>`:''}</div>`:''}
+  ${e.done?sugCard(e):''}
+  ${canReply?`<textarea class="sm" id="rep" placeholder="${t('reply')}"></textarea><p class="row"><button class="btn" onclick="sendReply()">${t('send')}</button><button class="btn alt" onclick="finish()">${t('fin')}</button></p>`:(!busy?(e.done?`<p><button class="btn" onclick="newEntry()">${t('newe')}</button></p>`:`<p><button class="btn" onclick="finish()">${t('fin')}</button></p>`):'')}`;
+}
+function vHistory(){
+  const L=[...S.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  let h=`<h2>${t('hist')}</h2>`;
+  if(!L.length)return h+`<p class="muted">${t('empty')}</p>`;
+  h+=`<div class="row" style="margin-bottom:14px"><input type="text" id="hq" placeholder="${t('search')}" aria-label="${t('search')}" oninput="filterHist(this.value)"></div>`;
+  h+=L.map(e=>`<div class="card" data-s="${esc((e.date+' '+(e.emotion||'')+' '+e.text).toLowerCase())}"><div class="row"><b>${esc(moodInfo(e.mood).e)} ${esc(e.date)}</b><span class="muted">${esc(moodInfo(e.mood).l)}</span>${e.stress!=null?`<span class="chip" style="color:${sc(e.stress)}">${t('stress')} ${e.stress}/10</span>`:''}<span class="muted">${esc(e.emotion||'')}</span></div><div class="entry" style="font-size:17px">${esc(e.text)}</div>${e.remark?`<p class="muted">${esc(e.remark)}</p>`:''}${e.thread.length?`<details><summary class="muted">AI</summary>${e.thread.map(x=>`<div class="bub ${x.r}">${esc(x.t)}</div>`).join('')}</details>`:''}<p style="margin:8px 0 0"><button class="btn alt" onclick="delE(${e.id})">${t('del')}</button></p></div>`).join('');
+  h+=`<p class="muted gone" id="hnone">${t('nomatch')}</p>`;
+  return h;
+}
+function filterHist(q){
+  q=(q||'').trim().toLowerCase();let n=0;
+  document.querySelectorAll('#view [data-s]').forEach(c=>{const ok=!q||c.dataset.s.includes(q);c.classList.toggle('gone',!ok);if(ok)n++});
+  const m=$('#hnone');if(m)m.classList.toggle('gone',n>0);
+}
+function weekData(){
+  const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);days.push(iso(d))}
+  const per=days.map(d=>{const es=S.entries.filter(e=>e.date===d);const ss=es.filter(e=>e.stress!=null).map(e=>e.stress);return{d,es,avg:ss.length?ss.reduce((a,b)=>a+b,0)/ss.length:null,mood:es.length?es[es.length-1].mood:null}});
+  const all=per.flatMap(p=>p.es);const sv=all.filter(e=>e.stress!=null).map(e=>e.stress);
+  const avg=sv.length?sv.reduce((a,b)=>a+b,0)/sv.length:null;
+  const hi=sv.filter(s=>s>=7).length;
+  const risk=avg==null?null:(avg>=7||hi>=3)?'high':avg>=5?'moderate':'low';
+  return{per,all,avg,risk,n:per.filter(p=>p.es.length).length};
+}
+function vReport(){
+  const w=weekData();const R=S.report&&S.report.wk===today()?S.report:null;
+  const risk=(R&&R.risk)||w.risk;
+  const col=risk==='high'?'var(--bad)':risk==='moderate'?'var(--warn)':'var(--ok)';
+  let h=`<h2>${t('report')}</h2><p class="sub">${t('rh')}</p>`;
+  if(!w.all.length)return h+`<p class="muted">${t('nodata')}</p>`;
+  h+=`<div class="card"><div class="chart">${w.per.map(p=>`<div><i style="height:${p.avg==null?4:Math.max(8,p.avg*10)}%;background:${p.avg==null?'var(--line)':sc(p.avg)}" title="${p.avg==null?'':p.avg.toFixed(1)}"></i></div>`).join('')}</div>
+  <div class="chart" style="height:auto;margin:0">${w.per.map(p=>`<div class="muted" style="height:auto">${p.mood==null?'·':esc(moodInfo(p.mood).e)}<br>${p.d.slice(5)}</div>`).join('')}</div></div>
+  <div class="stats card"><div><b>${w.n}/7</b>${t('days')}</div><div><b>${w.avg==null?'–':w.avg.toFixed(1)}</b>${t('avg')}</div><div><b style="color:${col}">${risk?t(risk):'–'}</b>${t('risk')}</div></div>`;
+  if(R){h+=`<div class="card"><p style="margin-top:0;font:19px/1.6 var(--serif)">${esc(R.summary||'')}</p>
+  ${(R.patterns||[]).length?`<b>${t('pat')}</b><ul>${R.patterns.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}
+  ${(R.suggestions||[]).length?`<b>${t('tips')}</b><ul>${R.suggestions.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}</div>`}
+  if(risk==='high'||(R&&R.professional))h+=`<div class="card help"><p style="margin-top:0">${t('pro')}</p><ul><li>${t('sos')}</li><li>${t('imh')}</li><li>${t('emg')}</li></ul></div>`;
+  h+=`<p class="row"><button class="btn" id="gb" onclick="genReport()">${t('gen')}</button><button class="btn alt" onclick="go('breathe')">${t('breathe')}</button></p><div id="rerr"></div>`;
+  return h;
+}
+async function genReport(){
+  const w=weekData(),b=$('#gb'),zh=isZh(w.all.map(e=>e.text).join(' '));b.disabled=true;b.textContent=t('think');
+  const log=w.per.filter(p=>p.es.length).map(p=>p.d+' mood='+moodInfo(p.mood,'en').l+' stress='+(p.avg==null?'?':p.avg.toFixed(1))+' | '+p.es.map(e=>e.text.slice(0,300)).join(' / ')).join('\n');
+  const lang=zh?'LANGUAGE RULE (critical): write summary, patterns and suggestions ONLY in Simplified Chinese (简体中文), even though these instructions are in English. 所有文字内容必须使用简体中文。Keep the JSON keys and the risk value in English.':'LANGUAGE RULE: write in English.';
+  const ex=zh?'{"risk":"moderate","summary":"本周压力呈上升趋势，主要与工作截止日期和睡眠不足有关。","patterns":["周中压力最高"],"suggestions":["今晚提前半小时关掉屏幕，做一次呼吸练习"],"professional":false}':'{"risk":"moderate","summary":"Two or three warm sentences naming the overall stress trend and why.","patterns":["short observation"],"suggestions":["practical, kind, specific step"],"professional":false}';
+  const prompt=[{role:'user',content:'You are Jotly, a supportive wellbeing assistant.\n'+lang+'\nBelow are diary notes from the last 7 days (mood and stress 0-10 per day). Assess burnout risk from exhaustion, cynicism, reduced efficacy, sleep and overwork. You are not a clinician and must not diagnose. The user prefers these de-stress methods: '+favs().map(k=>METH[k][1]).join(', ')+' (use them in the suggestions where fitting). Reply with ONE JSON object and nothing else (no markdown). Format example:\n'+ex+'\nAll fields are REQUIRED. risk must be exactly low, moderate or high. patterns: up to 3 items. suggestions: 2 to 4 items. professional: true if talking to a professional is worth recommending (always true when risk is high).\n'+lang+'\n\n'+log}];
+  try{
+    let r=cl(await ai(prompt)),j=pj(r);
+    if(zh&&(!j||!hasZh(j.summary))){try{const j2=pj(cl(await ai([...prompt,{role:'assistant',content:r},{role:'user',content:ZHFIX}])));if(j2)j=j2}catch(_){}}
+    if(!j)throw new Error('Could not read the AI reply. Try again.');
+    if(!['low','moderate','high'].includes(j.risk))j.risk=w.risk;
+    S.report={...j,wk:today()};save();render();
+  }catch(x){render();$('#rerr').innerHTML=x.message==='quota'?keyPrompt('report'):`<div class="banner"><span>${esc(x.message)}</span></div>`}
+}
+const P={box:[4,4,4,4],r478:[4,7,8,0],calm:[4,0,6,0]};
+const RELAX=[['breath','🫧','rBreath','rBreathSub'],['move','🏃','rMove','rMoveSub'],['nature','🌳','rNature','rNatureSub'],['ground','🖐️','rGround','rGroundSub'],['muscle','💪','rMuscle','rMuscleSub'],['sound','🎧','rSound','rSoundSub']];
+const MOVES=[['rMove1',40],['rMove2',40],['rMove3',40],['rMove4',40]];
+const GR=[5,4,3,2,1];
+function vBreathe(){
+  const h=`<h2>🌿 ${t('relax')}</h2><p class="sub">${t('rsub')}</p>`;
+  if(rel==='home')return h+`<div class="relgrid">${RELAX.map(([k,i,n,s])=>`<button class="relcard" onclick="openRel('${k}')"><span class="ri">${i}</span><b>${t(n)}</b><small>${t(s)}</small></button>`).join('')}</div>`;
+  const back=`<p style="margin:0 0 14px"><button class="btn alt" onclick="openRel('home')">← ${t('relax')}</button></p>`;
+  if(rel==='breath')return h+back+`<div class="card"><b>🫧 ${t('rBreath')}</b><p class="muted" style="margin:4px 0 0">${t('rBreathSub')}</p>
+  <div class="moods">${Object.keys(P).map(k=>`<button class="${k===pat?'on':''}" onclick="setPat('${k}')">${k==='box'?'4-4-4-4':k==='r478'?'4-7-8':'4-6'}</button>`).join('')}</div>
+  <div class="stage"><div class="orb" id="orb" style="transform:scale(1)"></div><div class="ptxt"><span id="pl"></span><b id="cnt"></b></div></div>
+  <p style="text-align:center"><button class="btn" id="go" onclick="breathe()">${t('start')}</button></p></div>`;
+  if(rel==='ground'){
+    const done=gP.reduce((a,b)=>a+b,0),total=GR.reduce((a,b)=>a+b,0);
+    return h+back+`<div class="card"><b>🖐️ ${t('rGround')}</b><p class="muted" style="margin:4px 0 12px">${t('rGmsg')}</p>
+    ${GR.map((n,i)=>{
+      const ready=i===0||gP[i-1]>=GR[i-1],fin=gP[i]>=n;
+      return `<div class="gstep ${fin?'gd':''} ${ready?'':'gwait'}"><div class="glab"><b>${t('rG'+(i+1))}</b><span class="muted">${gP[i]}/${n}</span></div>
+      <div class="dots">${Array.from({length:n},(_,j)=>`<button class="dot ${j<gP[i]?'on':''}" ${ready?'':'disabled'} onclick="gTap(${i},${j+1})" aria-label="${j+1}"></button>`).join('')}</div></div>`;
+    }).join('')}
+    ${done>=total?`<div class="rnote">${t('rGdone')}</div><p><button class="btn alt" onclick="gReset()">${t('start')}</button></p>`:''}</div>`;
+  }
+  if(rel==='muscle')return h+back+`<div class="card"><b>💪 ${t('rMuscle')}</b><p class="muted" style="margin:4px 0 0">${t('rMuscleSub')}</p><div id="mbody">${mBody()}</div></div>`;
+  if(rel==='move')return h+back+`<div class="card"><b>🏃 ${t('rMove')}</b><p class="muted" style="margin:4px 0 0">${t('rMoveSub')}</p><div id="mvbody">${mvBody()}</div></div>`;
+  if(rel==='nature')return h+back+`<div class="card"><b>🌳 ${t('rNature')}</b><p class="muted" style="margin:4px 0 12px">${t('rNatureSub')}</p>${nTasks()}</div>`;
+  return h+back+vSound();
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function breathe(){
+  if(run){run=0;return}
+  const id=run=Date.now(),o=$('#orb'),pl=$('#pl'),cn=$('#cnt'),g=$('#go'),names=['inhale','hold','exhale','hold'];
+  g.textContent=t('stop');
+  for(let c=0;c<6&&run===id;c++){
+    for(let i=0;i<4&&run===id;i++){
+      const d=P[pat][i];if(!d)continue;
+      pl.textContent=t(names[i]);
+      if(i%2===0){o.style.transition='transform '+d+'s ease-in-out';o.style.transform=i===0?'scale(1.7)':'scale(1)'}
+      for(let s=d;s>0&&run===id;s--){cn.textContent=s;await sleep(1000)}
+    }
+  }
+  if(run===id){pl.textContent=t('well');cn.textContent=''}else if(run===0){pl.textContent='';cn.textContent=''}
+  if(run===id||run===0){run=0;o.style.transition='transform .6s';o.style.transform='scale(1)';g.textContent=t('start')}
+}
+function openRel(k){
+  run=0;mRun=0;mI=0;mPh='';mvRun=0;mvI=0;mvLeft=0;
+  if(k!=='sound')killAudio();
+  rel=k;render();
+}
+function gTap(i,v){gP[i]=Math.max(0,v);render()}
+function gReset(){gP=[0,0,0,0,0];render()}
+function mBody(){
+  if(!mRun&&mI>=6)return `<div class="rnote">${t('well')}</div><p style="text-align:center"><button class="btn" onclick="muscle()">${t('start')}</button></p>`;
+  const i=mRun?mI:0;
+  const prog=Array.from({length:6},(_,j)=>`<span class="mdt ${j<mI||(mRun&&j===mI&&mPh==='release')?'on':''}"></span>`).join('');
+  return `<p class="mname">${t('rM'+(i+1))}</p>
+  <div class="mtimer">${mRun?`<span class="chip">${t(mPh==='tense'?'rTense':'rRelease')}</span><b>${mLeft}</b>`:`<span class="muted">6 × 5s</span>`}</div>
+  <div class="mprog">${prog}</div>
+  <p style="text-align:center"><button class="btn" onclick="muscle()">${mRun?t('stop'):t('start')}</button></p>`;
+}
+function paintMuscle(){const el=$('#mbody');if(el)el.innerHTML=mBody()}
+const NATS=['rNat1','rNat2','rNat3','rNat4'];
+function nTasks(){
+  const done=ntDone.filter(Boolean).length;
+  return NATS.map((k,i)=>`<button class="ntask ${ntDone[i]?'on':''}" onclick="ntTap(${i})"><span class="nbox">${ntDone[i]?'✓':''}</span><span>${t(k)}</span></button>`).join('')
+  +(done===NATS.length?`<div class="rnote">${t('rNatureDone')}</div><p><button class="btn alt" onclick="ntReset()">${t('start')}</button></p>`:'');
+}
+function ntTap(i){ntDone[i]=!ntDone[i];render()}
+function ntReset(){ntDone=[false,false,false,false];render()}
+function mvBody(){
+  if(!mvRun&&mvI>=MOVES.length)return `<div class="rnote">${t('rMoveDone')}</div><p style="text-align:center"><button class="btn" onclick="move()">${t('start')}</button></p>`;
+  const i=mvRun?mvI:0;
+  const curDur=MOVES[i][1],frac=mvRun?Math.min(1,(curDur-mvLeft)/curDur):0;
+  const pct=Math.round(frac*100);
+  const prog=Array.from({length:MOVES.length},(_,j)=>{
+    const filled=j<mvI?'on':'';
+    const part=j===mvI&&mvRun&&frac>0?`style="background:linear-gradient(90deg,var(--pri) ${pct}%,var(--line) ${pct}%)"`:'';
+    return `<span class="mdt ${filled}" ${part}></span>`}).join('');
+  return `<p class="mname">${t(MOVES[i][0])}</p>
+  <div class="mtimer">${mvRun?`<b>${mvLeft}</b><span class="muted">s</span>`:`<span class="muted">${MOVES.length} × ${MOVES[0][1]}s</span>`}</div>
+  <div class="mprog">${prog}</div>
+  <p style="text-align:center"><button class="btn" onclick="move()">${mvRun?t('stop'):t('start')}</button></p>`;
+}
+function paintMove(){const el=$('#mvbody');if(el)el.innerHTML=mvBody()}
+async function move(){
+  if(mvRun){mvRun=0;mvI=0;mvLeft=0;paintMove();return}
+  const id=mvRun=Date.now();mvI=0;
+  for(let i=0;i<MOVES.length;i++){
+    if(mvRun!==id)return;
+    mvI=i;
+    for(let s=MOVES[i][1];s>0;s--){
+      if(mvRun!==id)return;
+      mvLeft=s;paintMove();await sleep(1000);
+    }
+  }
+  if(mvRun===id){mvRun=0;mvI=MOVES.length;mvLeft=0;paintMove()}
+}
+async function muscle(){
+  if(mRun){mRun=0;mI=0;mPh='';paintMuscle();return}
+  const id=mRun=Date.now();mI=0;
+  for(let i=0;i<6;i++){
+    for(const ph of ['tense','release']){
+      if(mRun!==id)return;
+      mI=i;mPh=ph;
+      for(let s=5;s>0;s--){
+        if(mRun!==id)return;
+        mLeft=s;paintMuscle();await sleep(1000);
+      }
+    }
+  }
+  if(mRun===id){mRun=0;mI=6;mPh='';mLeft=0;paintMuscle()}
+}
+function vSound(){
+  const K=[['rain','🌧️','rRain'],['waves','🌊','rWaves'],['forest','🍃','rForest']];
+  return `<div class="card"><b>🎧 ${t('rSound')}</b><p class="muted" style="margin:4px 0 12px">${t('rSoundSub')}</p>
+  <div class="moods">${K.map(([k,i,n])=>`<button class="${snd&&snd.kind===k?'on':''}" onclick="sndStart('${k}')">${i} ${t(n)}</button>`).join('')}</div>
+  ${snd?`<div class="row"><button class="btn alt" onclick="sndStop()">${t('stop')}</button><label class="muted" style="display:flex;gap:8px;align-items:center;flex:1;min-width:180px"><span>${t('rVol')}</span><input type="range" min="0" max="1" step="0.05" value="${sVol}" oninput="setVol(this.value)" style="width:auto;flex:1"></label></div>`:''}
+  </div>`;
+}
+function killAudio(){
+  if(!snd)return;
+  try{snd.src.stop();if(snd.lfo)snd.lfo.stop();snd.ac.close()}catch(e){}
+  snd=null;
+}
+function sndStop(){killAudio();render()}
+function setVol(v){sVol=+v;if(snd&&snd.gain)snd.gain.gain.linearRampToValueAtTime(sVol*.5,snd.ac.currentTime+.15)}
+function sndStart(kind){
+  killAudio();
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC){toast(t('rNoAudio'));return}
+  let ac;
+  try{ac=new AC()}catch(e){toast(t('rNoAudio'));return}
+  const len=Math.floor(ac.sampleRate*4),buf=ac.createBuffer(1,len,ac.sampleRate),d=buf.getChannelData(0);
+  let last=0;
+  for(let i=0;i<len;i++){
+    const w=Math.random()*2-1;
+    if(kind==='waves'){last=(last+.02*w)/1.02;d[i]=Math.max(-1,Math.min(1,last*3.2))}
+    else d[i]=w;
+  }
+  const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
+  const filt=ac.createBiquadFilter(),gain=ac.createGain();
+  if(kind==='rain'){filt.type='lowpass';filt.frequency.value=2600}
+  else if(kind==='waves'){filt.type='lowpass';filt.frequency.value=700}
+  else{filt.type='bandpass';filt.frequency.value=1400;filt.Q.value=.7}
+  src.connect(filt);filt.connect(gain);gain.connect(ac.destination);
+  gain.gain.value=0;gain.gain.linearRampToValueAtTime(sVol*.5,ac.currentTime+1.2);
+  src.start();
+  snd={ac,src,gain,kind};
+  if(kind==='waves'){
+    const lfo=ac.createOscillator(),lg=ac.createGain();
+    lfo.frequency.value=.09;lg.gain.value=sVol*.28;
+    lfo.connect(lg);lg.connect(gain.gain);lfo.start();snd.lfo=lfo;
+  }
+  render();
+}
+function vVault(){
+  let h=`<h2>${vKey?'🔓':'🔒'} ${t('vault')}</h2><p class="sub">${t('vsub')}</p>`;
+  if(!canCrypt())return h+`<div class="card"><p style="margin:0">${t('vnosub')}</p></div>`;
+  const m=vMeta();
+  if(!m){
+    return h+`<div class="card lockbox ${vErr?'shake':''}"><div class="lbig">🔐</div><b>${t('vsetup')}</b>
+    <p class="muted">${t('vsetupNote')}</p>
+    <label class="fld"><span>${t('vpw')}</span><input type="password" id="vpw" autocomplete="new-password"></label>
+    <label class="fld"><span>${t('vpw2')}</span><input type="password" id="vpw2" autocomplete="new-password"></label>
+    ${vErr?`<p class="errline">${t(vErr)}</p>`:''}
+    <p><button class="btn" onclick="createVault()">${t('vcreate')}</button></p>
+    <p class="muted">${t('vautolock')}</p></div>`;
+  }
+  if(!vKey){
+    return h+`<div class="card lockbox ${vErr?'shake':''}"><div class="lbig">🔒</div><b>${t('vlocked')}</b>
+    <p class="muted">${t('vlockedSub')}</p>
+    <label class="fld"><span>${t('vpw')}</span><input type="password" id="vpw" autocomplete="current-password" onkeydown="if(event.key==='Enter')unlockVault()"></label>
+    ${vErr?`<p class="errline">${t(vErr)}</p>`:''}
+    <p><button class="btn" onclick="unlockVault()">${t('vunlock')}</button></p>
+    <p class="muted">${t('vautolock')}</p></div>`;
+  }
+  const list=[...vEntries].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  const pub=[...S.entries].sort((a,b)=>b.date.localeCompare(a.date)||b.id-a.id);
+  return h+`<div class="banner"><span>${t('vnote')}</span><button class="btn alt" onclick="lockVault()">${t('vlock')}</button></div>
+  <div class="card"><b>${t('vadd')}</b>
+    <div class="row" style="margin-top:10px"><input type="date" id="vdt" value="${today()}"></div>
+    ${moodRow('v',vMood)}
+    <textarea class="sm" id="vtx" placeholder="${t('ph')}" oninput="vDraft=this.value">${esc(vDraft)}</textarea>
+    <p><button class="btn" onclick="addPrivate()">${t('vaddb')}</button></p></div>
+  ${list.length?list.map(e=>`<div class="card vitem"><div class="row"><b>${esc(moodInfo(e.mood).e)} ${esc(e.date)}</b><span class="chip">${esc(moodInfo(e.mood).l)}</span></div><div class="entry" style="font-size:17px">${esc(e.text)}</div><p style="margin:8px 0 0"><button class="btn alt" onclick="moveOut(${e.id})">${t('voutb')}</button> <button class="btn alt" onclick="delPrivate(${e.id})">${t('del')}</button></p></div>`).join(''):`<p class="muted">${t('vempty')}</p>`}
+  <div class="card"><b>${t('vmove')}</b>${pub.length?pub.map(e=>`<div class="hrow"><span class="muted">${esc(moodInfo(e.mood).e)} ${esc(e.date)}</span><span class="txt">${esc(e.text.slice(0,90))}</span><button class="btn alt" onclick="moveIn(${e.id})">${t('vmoveb')}</button></div>`).join(''):`<p class="muted">${t('vnone')}</p>`}</div>
+  <details class="card"><summary><b>${t('vchanged')}</b></summary>
+    <label class="fld"><span>${t('vcur')}</span><input type="password" id="vcur" autocomplete="current-password"></label>
+    <label class="fld"><span>${t('vnew')}</span><input type="password" id="vnew" autocomplete="new-password"></label>
+    ${vErr?`<p class="errline">${t(vErr)}</p>`:''}
+    <p><button class="btn alt" onclick="changeVaultPw()">${t('vchangeb')}</button></p></details>`;
+}
+function vSettings(){
+  return `<h2>${t('settings')}</h2><p class="sub">${t('disc')}</p>
+  <div class="card"><label class="fld"><span>${t('uk')}</span><input type="password" value="${esc(S.userKey||'')}" placeholder="sk-or-v1-…" autocomplete="off" onchange="S.userKey=this.value.trim();save()"></label><p class="muted">${t('keyh')}</p></div>
+  <div class="card"><b>${t('fav')}</b><p class="muted" style="margin:2px 0 0">${t('favh')}</p><div class="moods">${Object.keys(METH).map(k=>`<button class="${favs().includes(k)?'on':''}" onclick="togFav('${k}')"><span>${METH[k][0]}</span>${METH[k][S.lang==='zh'?2:1]}</button>`).join('')}</div></div>
+  <div class="card"><label class="fld"><span>${t('lang')}</span><select onchange="S.lang=this.value;save();render()"><option value="en" ${S.lang==='en'?'selected':''}>English</option><option value="zh" ${S.lang==='zh'?'selected':''}>中文</option></select></label></div>
+  <div class="card"><b>🔒 ${t('vault')}</b><p class="muted">${vMeta()?t('vset'):t('vsub')}</p><p style="margin:8px 0 0"><button class="btn alt" onclick="go('vault')">${vKey?'🔓 '+t('vault'):t('vunlock')}</button></p></div>
+  <div class="card"><b>${t('expo')}</b><p class="muted">${t('expon')}</p><p style="margin:8px 0 0"><button class="btn alt" onclick="exportData()">${t('expo')}</button></p></div>
+  <button class="btn alt" onclick="wipe()">${t('clear')}</button>`;
+}
+
+/* ---------- fortune ---------- */
+const DECK=[
+ {em:'🌙',n:'月亮 · 睡眠之牌',en:'THE MOON',d:'睡眠之牌出现，预示你的生物钟正在发出信号。过去你或许忽视了休息需求，多梦浅眠是潜意识的提醒：该把睡眠当作头等大事了。'},
+ {em:'🌞',n:'太阳 · 活力之牌',en:'THE SUN',d:'太阳牌象征蓬勃的生命力。过去的你充满活力，规律作息带来的能量仍在延续，这是你宝贵的健康本钱。'},
+ {em:'🍂',n:'隐士 · 静养之牌',en:'THE HERMIT',d:'隐士牌代表向内探索的时期。过去的你主动或被动放慢脚步，独处与静养让你重新听见身体的声音。'},
+ {em:'🌊',n:'圣杯 · 情绪之牌',en:'THE CUP',d:'圣杯之水映照情绪。过去你的心情如潮汐起伏，情绪健康是你最重要的课题。'},
+ {em:'⚡',n:'高塔 · 透支之牌',en:'THE TOWER',d:'高塔牌暗示曾经的作息崩塌——熬夜爆肝、饮食混乱。但废墟之上正是重建健康秩序的最好时机。'},
+ {em:'🌿',n:'节制 · 平衡之牌',en:'TEMPERANCE',d:'节制牌是当下的指引：你的身体正在寻找平衡。饮食有度、作息有节、运动适量，中庸之道即疗愈。'},
+ {em:'💓',n:'恋人 · 连接之牌',en:'THE LOVERS',d:'恋人牌预示人际关系正影响你的身心。和让你舒服的人在一起，免疫力都会变好。'},
+ {em:'🏃',n:'力量 · 行动之牌',en:'STRENGTH',d:'力量牌召唤行动。现在的你拥有突破惯性的能量，此刻开始的那次锻炼、那次早睡，意义远超想象。'},
+ {em:'🌀',n:'命运之轮 · 转变之牌',en:'WHEEL',d:'命运之轮转动的当下，一个小决定将撬动未来的健康走向。牌面显示：转折点就在这周。'},
+ {em:'⭐',n:'星星 · 希望之牌',en:'THE STAR',d:'星星牌昭示希望。坚持当下的好习惯，三个月后你将看到明显的身心改善，愿望正在显化。'},
+ {em:'🌱',n:'世界 · 圆满之牌',en:'THE WORLD',d:'世界牌预示健康周期的圆满达成。未来的你将找到属于自己的节奏：身心合一，精力充沛。'},
+ {em:'🔥',n:'战车 · 突破之牌',en:'THE CHARIOT',d:'战车牌象征意志力驱动的突破。未来你将战胜惰性：戒断熬夜、规律健身，身体会成为你最有力的盟友。'},
+ {em:'😴',n:'宝剑 · 断舍之牌',en:'THE SWORD',d:'宝剑牌提示做减法。果断切断消耗你的人事物——无效社交、睡前刷屏、情绪内耗，轻盈方能健康。'},
+ {em:'🍵',n:'女皇 · 滋养之牌',en:'THE EMPRESS',d:'女皇牌代表滋养。像对待珍宝一样对待自己的身体：好好吃饭、好好睡觉，健康自会丰盛回报。'}
+];
+const QIANS=[
+ {g:'上上签',p:'晓色云开春雾散，身康体健运亨通',e:'云开雾散，运势大开。签意示你近期身心状态将明显好转，坚持早睡早起，好气色自然来。'},
+ {g:'上签',p:'枯木逢春再发芽，调养身心莫着急',e:'枯木逢春之象。之前的疲惫与不适正在消退，调理贵在有恒，勿因一时见效慢而弃之。'},
+ {g:'上签',p:'风平浪静好行舟，饮食有节百病休',e:'风平浪静之兆。当前是养成好习惯的最佳窗口期，饮食有节、起居有常，百病自休。'},
+ {g:'中签',p:'路遥知马力，日久见健康',e:'路遥知马力。健康非一日之功，签提醒你莫求速成，日复一日的坚持才是良方。'},
+ {g:'中签',p:'云遮月影虽朦胧，守得云开见月明',e:'月虽被云遮，终会重明。近期或有小恙或倦怠，静养数日，自会转好，不必忧心。'},
+ {g:'下签',p:'舟行急流须缓桨，熬夜伤身早回头',e:'急流缓桨之意。签面警示你近期透支过度，身体已亮起黄灯，速速调整作息，回头是岸。'},
+ {g:'上上签',p:'百花齐放映日红，神采飞扬好运隆',e:'百花齐放，气象万千。你正处于能量高涨期，适合开展新的运动计划，事半功倍。'},
+ {g:'中签',p:'磨刀不误砍柴工，充足睡眠效率高',e:'磨刀不误砍柴工。签提醒你：与其带病硬撑，不如好好睡一觉，效率与健康兼得。'}
+];
+const OMIS=[
+ {g:'大吉',h:'身体自愈力全开，小恙将迅速痊愈。',s:'眠り深し，沾枕头就着。',f:'想吃就吃，代谢良好，但八分饱为佳。',w:'罗马非一日建成，好习惯亦然。'},
+ {g:'吉',h:'元气充沛，适合开启新的健身计划。',s:'稍有浅眠，睡前温水泡脚可改善。',f:'宜多摄取蔬菜，肠胃运良好。',w:'笑口常开，福气自来。'},
+ {g:'中吉',h:'平稳之象，注意肩颈放松。',s:'作息尚可，周末补觉别太贪。',f:'忌冷食过多，温养脾胃。',w:'坚持三年，石头也能坐热。'},
+ {g:'小吉',h:'略有疲态，推荐拉伸与散步。',s:'入睡稍慢，试试白噪音。',f:'宜少食多餐。',w:'七次跌倒八次爬起，韧性即健康。'},
+ {g:'末吉',h:'需留意身体发出的细微信号，别硬扛。',s:'睡眠不足之兆，今晚请早点休息。',f:'忌暴饮暴食。',w:'欲速则不达，绕点路也无妨。'},
+ {g:'凶',h:'疲劳累积，请务必休息。（平常心看待即可）',s:'熬夜为万恶之源，速改。',f:'宜清淡饮食，忌辛辣。',w:'雨后土地更结实，休养后会更强。'}
+];
+const ZOD=[['♈','白羊座','3.21-4.19'],['♉','金牛座','4.20-5.20'],['♊','双子座','5.21-6.21'],['♋','巨蟹座','6.22-7.22'],['♌','狮子座','7.23-8.22'],['♍','处女座','8.23-9.22'],['♎','天秤座','9.23-10.23'],['♏','天蝎座','10.24-11.22'],['♐','射手座','11.23-12.21'],['♑','摩羯座','12.22-1.19'],['♒','水瓶座','1.20-2.18'],['♓','双鱼座','2.19-3.20']];
+const ZLINES=['守护星今日相位良好，你的恢复力处于高位，适合挑战稍高强度的运动。','行星提示你近日水分摄入不足，记得随身带水杯。','星象显示情绪波动偏大，冥想十分钟能帮你稳住阵脚。','今日宜早睡，你的星座正处于「充电窗口期」，错过要再等一周。','火星赋予你行动力，是开始新习惯的黄金日。','月亮经过你的健康宫，肠胃敏感，饮食宜清淡。','星星建议你今天多晒太阳，维生素D比咖啡更提神。','今日体力中等，运动以舒缓为主，散步瑜伽皆宜。','星盘显示你最近忽略了眼睛休息，记住20-20-20法则。','今日社交运与身心运联动，和朋友一起运动效果翻倍。','行星提醒：你的颈椎需要活动了，抬头望天三次。','今日幸运数字是7，喝够7杯水会有好事发生。'];
+const GUAS=[
+ {n:'乾为天',e:'六阳纯卦，刚健之象。身心之道在于自强不息——坚持锻炼、规律作息，你的元气正在上升期。'},
+ {n:'坤为地',e:'厚德载物，柔顺之象。卦面劝你近日宜静不宜动，好好休息、好好吃饭，顺应身体的节奏。'},
+ {n:'水山蹇',e:'蹇者，难也。近期身心路上有阻滞，或有旧恙反复。莫急莫慌，缓步前行，自会蹇极而通。'},
+ {n:'地天泰',e:'泰卦，通泰之象。身心交而万物通，你正进入良性循环，好运与健康俱来。'},
+ {n:'泽山咸',e:'咸者，感也。身体正在向你「喊话」，请认真对待每一个疲惫信号，感受并回应它。'},
+ {n:'雷水解',e:'解卦，解脱之象。久缠的不适与压力将得到缓解，今日起轻装上阵。'},
+ {n:'风火家人',e:'家人卦。健康与家庭氛围息息相关，多与家人共处，好情绪是最好的补品。'},
+ {n:'火天大有',e:'大有卦，丰盛之象。精力与气运皆旺，适合把健康计划做大做全，你拥有天时地利。'},
+ {n:'山水蒙',e:'蒙卦，启蒙之象。你对自己的身体还不够了解，建议做一次全面体检，知己知彼。'},
+ {n:'水雷屯',e:'屯卦，万事开头难。新习惯的养成期最煎熬，熬过这阵，柳暗花明。'}
+];
+function mergeEn(arr,en,keys){en.forEach((x,i)=>keys.forEach((k,j)=>{arr[i][k+'_en']=x[j]}))}
+mergeEn(DECK,[
+ ['Moon · Sleep','The Sleep card appears: your body clock is sending signals. You may have ignored your need for rest in the past; restless, dream-filled nights are your subconscious reminding you to make sleep a top priority.'],
+ ['Sun · Vitality','The Sun stands for vibrant life force. In the past you were full of energy, and the benefits of a regular routine still carry on. This is your most valuable health capital.'],
+ ['Hermit · Rest','The Hermit marks a time of looking inward. In the past you slowed down, by choice or not, and solitude and rest let you hear your body again.'],
+ ['Cup · Emotion','The waters of the Cup mirror your emotions. Your moods have risen and fallen like tides, and emotional health is your most important lesson.'],
+ ['Tower · Burnout','The Tower hints at a collapsed routine in the past: late nights, burnout, chaotic meals. Yet the ruins are the best place to rebuild a healthy order.'],
+ ['Temperance · Balance','Temperance is your guidance for now: your body is looking for balance. Eat in moderation, keep a steady rhythm, exercise in measure. The middle way is the cure.'],
+ ['Lovers · Connection','The Lovers suggests your relationships are shaping your body and mind. Time with people who make you feel at ease can even strengthen your immunity.'],
+ ['Strength · Action','Strength calls you to act. You now have the energy to break old habits, and the workout or early night you start today means more than you think.'],
+ ['Wheel · Change','As the Wheel of Fortune turns, one small decision can shift your future health. The cards show a turning point this week.'],
+ ['Star · Hope','The Star brings hope. Keep your good habits going and in three months you will see clear improvements in body and mind. Your wish is taking shape.'],
+ ['World · Completion','The World foretells a health cycle coming full circle. In the future you will find your own rhythm, with body and mind in harmony and plenty of energy.'],
+ ['Chariot · Breakthrough','The Chariot stands for breakthroughs driven by willpower. You will overcome inertia: quit late nights, exercise regularly, and your body becomes your strongest ally.'],
+ ['Sword · Letting Go','The Sword tells you to subtract. Cut away what drains you, such as empty socializing, scrolling before bed and emotional spinning. Lightness is health.'],
+ ['Empress · Nourishment','The Empress stands for nourishment. Treat your body like a treasure: eat well, sleep well, and health will reward you abundantly.']
+],['n','d']);
+mergeEn(QIANS,[
+ ['Best fortune','Dawn clouds part and spring mist clears; a healthy body brings smooth fortune.','Clouds part and fortune opens. Your body and mind should improve noticeably soon. Keep early nights and early mornings, and a good complexion will follow.'],
+ ['Good fortune','A withered tree buds again in spring; take your time restoring body and mind.','The sign of a withered tree reviving. Past fatigue and discomfort are fading. Recovery rewards steadiness, so do not give up because progress seems slow.'],
+ ['Good fortune','Calm winds and still waters make for smooth sailing; moderate eating keeps illness away.','A calm-waters omen. Now is the best window to build good habits: eat in moderation, keep regular hours, and illness stays away.'],
+ ['Fair fortune','A long road shows a horse’s strength; time reveals health.','The long road tests the horse. Health is not built in a day. Do not seek quick results; steady daily effort is the best remedy.'],
+ ['Fair fortune','Clouds veil the moon’s glow, but when they part the moon shines bright.','Even a clouded moon will shine again. You may feel minor unwellness or tiredness lately. Rest a few days and you will recover, so do not worry.'],
+ ['Poor fortune','In a rushing current, slow your oars; late nights harm the body, so turn back early.','The meaning of slowing the oars in rapids. The sign warns that you have been overdrawing yourself and your body shows a yellow light. Adjust your routine soon and turn back to shore.'],
+ ['Best fortune','A hundred flowers bloom red in the sun; spirits soar and good luck rises.','A hundred flowers in bloom. You are in a high-energy phase, a great time to begin a new exercise plan and get double the results.'],
+ ['Fair fortune','Sharpening the blade does not delay the chopping; enough sleep brings efficiency.','Sharpening the blade does not delay the work. Rather than push on while unwell, get a good sleep and gain both efficiency and health.']
+],['g','p','e']);
+mergeEn(OMIS,[
+ ['Great Blessing','Your body’s self-healing is at full strength; minor ailments will clear quickly.','Deep sleep; you fall asleep the moment your head hits the pillow.','Eat what you like and your metabolism is good, but stop at about 80% full.','Rome was not built in a day, and neither are good habits.'],
+ ['Blessing','Plenty of energy; a good time to start a new fitness plan.','Slightly light sleep; a warm foot soak before bed can help.','Eat more vegetables; your digestion is in good shape.','Keep smiling and good fortune will follow.'],
+ ['Middle Blessing','A steady sign; relax your neck and shoulders.','Your routine is fine; do not oversleep on weekends.','Avoid too much cold food and keep your stomach warm.','Sit on a stone for three years and even it will warm up.'],
+ ['Small Blessing','A little tired; stretching and walking are recommended.','Slow to fall asleep; try white noise.','Eat smaller meals more often.','Fall seven times, get up eight: resilience is health.'],
+ ['Late Blessing','Watch for the subtle signals your body sends, and do not tough it out.','A sign of too little sleep; rest early tonight.','Avoid overeating.','Haste makes waste; a small detour does no harm.'],
+ ['Misfortune','Fatigue is piling up, so please rest. (Take it calmly.)','Late nights are the root of much harm; change this soon.','Favor light meals and avoid spicy food.','The ground is firmer after rain; you will be stronger after resting.']
+],['g','h','s','f','w']);
+mergeEn(GUAS,[
+ ['Qian · The Creative','Six unbroken yang lines, a firm and strong image. The way for body and mind is constant self-improvement: keep exercising and keep regular hours, and your vitality is rising.'],
+ ['Kun · The Receptive','Gentle and receptive, carrying all things. The hexagram advises quiet over activity lately: rest well, eat well, and follow your body’s rhythm.'],
+ ['Jian · Obstruction','Jian means difficulty. There is some blockage on your path of body and mind, and old ailments may flare. Do not panic; go slowly and the way will open.'],
+ ['Tai · Peace','The image of harmony. When body and mind connect, all things flow. You are entering a virtuous cycle where good luck and health arrive together.'],
+ ['Xian · Influence','Xian means sensing. Your body is calling to you, so take every signal of tiredness seriously: feel it and respond.'],
+ ['Jie · Deliverance','The image of release. Long-lingering discomfort and pressure will ease, so travel lighter from today.'],
+ ['Jiaren · The Family','Health and the atmosphere at home are closely linked. Spend more time with family; a good mood is the best tonic.'],
+ ['Dayou · Great Possession','The image of abundance. Energy and fortune are both strong, so make your health plan bigger and fuller. Heaven and earth are with you.'],
+ ['Meng · Youthful Folly','The image of awakening. You do not yet know your body well enough; a full health check-up is advised, to know yourself and your condition.'],
+ ['Zhun · Difficulty at the Start','Everything is hard at the beginning. The early phase of a new habit is the toughest; get through it and the way brightens.']
+],['n','e']);
+const ZOD_EN=['Aries','Taurus','Gemini','Cancer','Leo','Virgo','Libra','Scorpio','Sagittarius','Capricorn','Aquarius','Pisces'];
+const ZLINES_EN=['Your guardian planet is well aligned today and your recovery is high: a good day for slightly more intense exercise.','The planets hint you are not drinking enough water lately; keep a bottle with you.','The stars show larger mood swings; ten minutes of meditation can steady you.','Go to bed early today: your sign is in a “charging window” that will not return for another week.','Mars gives you drive: a golden day to start a new habit.','The Moon passes through your house of health, so your stomach is sensitive. Keep meals light.','The stars suggest more sunshine today; vitamin D wakes you up better than coffee.','Energy is moderate today; keep exercise gentle, with a walk or yoga.','Your chart shows you have neglected rest for your eyes lately. Remember the 20-20-20 rule.','Social luck and wellbeing luck are linked today; exercising with a friend doubles the effect.','A planetary reminder: your neck needs to move. Look up at the sky three times.','Your lucky number today is 7: drink seven glasses of water and something good will happen.'];
+const zhL=()=>S.lang==='zh';
+const X=(o,k)=>zhL()?o[k]:(o[k+'_en']||o[k]);
+const FORTS=[['tarot','🔮','塔罗牌阵','Tarot spread'],['qian','🏮','观音灵签','Guanyin sticks'],['omi','⛩️','御神签','Omikuji'],['zodiac','♈','十二星座','Zodiac'],['iching','☯️','周易铜钱','I Ching coins']];
+let fort='tarot',ftPicks=[null,null,null],ftDrawn=new Set(),ftQ=null,ftO=null,ftZ=null,ftG=null,ftLines=[];
+const rnd2=n=>Math.floor(Math.random()*n);
+function vFortune(){
+  const chips=`<div class="moods" role="group">${FORTS.map(([k,i,z,e])=>`<button class="${k===fort?'on':''}" onclick="pickFort('${k}')">${i} ${zhL()?z:e}</button>`).join('')}</div>`;
+  const body=fort==='tarot'?fTarot():fort==='qian'?fQian():fort==='omi'?fOmi():fort==='zodiac'?fZodiac():fIChing();
+  return `<h2>🔮 ${t('fortune')}</h2><p class="sub">${t('fsub')}</p>`+chips+body+`<p class="muted" style="margin-top:18px">${t('ffun')}</p>`;
+}
+function pickFort(k){fort=k;render()}
+function fTarot(){
+  const labs=[t('ftPast'),t('ftNow'),t('ftFuture')],full=ftPicks.every(x=>x!=null);
+  const stars=full?ftPicks.reduce((a,p)=>a+p,0)%5+1:0;
+  return `<div class="card"><div class="ftag">${zhL()?'塔罗':'TAROT'}</div><div class="ftrow">${labs.map((lab,i)=>{
+    const c=ftPicks[i]==null?null:DECK[ftPicks[i]];
+    return `<div class="fslot"><span class="fpos">${lab}</span><div class="fcard ${c?'flip':''}" role="button" tabindex="0" aria-label="${lab}" onclick="ftFlip(${i})"><div class="finner">
+      <div class="fface fback">✦</div>
+      <div class="fface ffront">${c?`<div class="fem">${c.em}</div><h4>${X(c,'n')}</h4>${zhL()?`<small>${c.en}</small>`:''}`:''}</div>
+    </div></div></div>`}).join('')}</div>
+  <p style="text-align:center;margin:16px 0 0"><button class="btn alt" onclick="ftReset()">✨ ${t('ftRedraw')}</button></p>
+  ${full?`<div class="freading"><div class="rt">✦ ${t('ftInsight')} ${'⭐'.repeat(stars)}${'☆'.repeat(5-stars)} ✦</div>
+  ${ftPicks.map((p,i)=>`<p><b>${labs[i]}${zhL()?'·':' · '}${X(DECK[p],'n')}</b> ${X(DECK[p],'d')}</p>`).join('')}</div>`:''}</div>`;
+}
+function ftFlip(i){
+  if(ftPicks[i]!=null)return;
+  if(ftDrawn.size>=DECK.length)ftDrawn.clear();
+  let n;do{n=rnd2(DECK.length)}while(ftDrawn.has(n));
+  ftDrawn.add(n);ftPicks[i]=n;render();
+}
+function ftReset(){ftPicks=[null,null,null];ftDrawn.clear();render()}
+function fQian(){
+  const q=ftQ?QIANS[ftQ.i]:null;
+  return `<div class="card fqian"><div class="ftag">${zhL()?'灵签':'FORTUNE STICKS'}</div>
+  <p style="margin:0"><button class="ftube" onclick="ftDrawQian()" aria-label="${t('ftDrawQian')}">🎋</button></p>
+  <p class="muted" style="margin:4px 0 0">${t('ftDrawQian')}</p>
+  ${q?`<div class="fqres"><div class="fno">${zhL()?'第 '+ftQ.n+' 签':'Stick No. '+ftQ.n}</div><div class="fgrade">${X(q,'g')}</div><div class="fpoem">${X(q,'p')}</div><p class="fexp">${zhL()?'【解签】':'Reading: '}${X(q,'e')}</p></div>`:''}</div>`;
+}
+function ftDrawQian(){ftQ={i:rnd2(QIANS.length),n:rnd2(100)+1};render()}
+function fOmi(){
+  const o=ftO==null?null:OMIS[ftO],lb=zhL()?['健康運','睡眠運','飲食運','守護の言葉']:['Health','Sleep','Diet','Guardian words'];
+  return `<div class="card"><div class="ftag">${zhL()?'御神签':'OMIKUJI'}</div>
+  <p style="text-align:center;margin:0"><button class="btn" onclick="ftDrawOmi()">🪙 ${t('ftDrawOmi')}</button></p>
+  ${o?`<div class="fpaper"><div class="fograde">${X(o,'g')}</div>
+  <div class="fline"><b>${lb[0]}</b><span>${X(o,'h')}</span></div>
+  <div class="fline"><b>${lb[1]}</b><span>${X(o,'s')}</span></div>
+  <div class="fline"><b>${lb[2]}</b><span>${X(o,'f')}</span></div>
+  <div class="fline"><b>${lb[3]}</b><span>${X(o,'w')}</span></div>
+  <p class="muted" style="font-size:12px;margin:10px 0 0">${zhL()?'※ 若抽到「凶」，可以把它系在神社的树上，寓意把坏运气留在神域。':'Note: if you draw “Misfortune”, tie it to a tree at a shrine, a way of leaving bad luck behind.'}</p></div>`:''}</div>`;
+}
+function ftDrawOmi(){ftO=rnd2(OMIS.length);render()}
+function fZodiac(){
+  const zn=i=>zhL()?ZOD[i][1]:ZOD_EN[i];
+  return `<div class="card"><div class="ftag">${zhL()?'星座':'ZODIAC'}</div>
+  <div class="fgrid">${ZOD.map(([e],i)=>`<button class="fz ${ftZ&&ftZ.i===i?'on':''}" onclick="ftZod(${i})"><span>${e}</span><small>${zn(i)}</small></button>`).join('')}</div>
+  ${ftZ?`<div class="fzres"><div class="fzname">${ZOD[ftZ.i][0]} ${zn(ftZ.i)} · ${ZOD[ftZ.i][2]}</div>
+  <div class="muted" style="font-size:12px;margin-top:2px">${t('ftScore')} <b style="font-size:16px">${ftZ.score}</b> / 100</div>
+  <div class="fbar"><i style="width:${ftZ.score}%"></i></div>
+  <p style="font-size:14px;margin:10px 0 0">${zhL()?ZLINES[ftZ.li]:ZLINES_EN[ftZ.li]}</p></div>`:`<p class="muted" style="text-align:center;margin:12px 0 0">${t('ftPickZodiac')}</p>`}</div>`;
+}
+function ftZod(i){ftZ={i,score:62+rnd2(37),li:rnd2(ZLINES.length)};render()}
+function fIChing(){
+  const g=ftG==null?null:GUAS[ftG],coins=zhL()?['乾','坤','易']:['☰','☷','☯'];
+  return `<div class="card fich"><div class="ftag" style="color:#b9bdac">${zhL()?'周易':'I CHING'}</div>
+  <p style="text-align:center;margin:0">${coins.map(c=>`<span class="fcoin ${g?'show':''}">${c}</span>`).join('')}</p>
+  <p style="text-align:center;margin:12px 0 0"><button class="btn" onclick="ftToss()">🪙 ${t('ftToss')}</button></p>
+  <div class="flines">${ftLines.map((y,i)=>`<div class="fgline" style="animation-delay:${i*.12}s"><div class="fbar2 ${y?'':'yin'}"></div></div>`).join('')}</div>
+  ${g?`<div style="text-align:center"><div class="fgname">☰ ${X(g,'n')}</div><p class="fgexp">${zhL()?'【卦辞解身心】':'Reading for body and mind: '}${X(g,'e')}</p></div>`:''}</div>`;
+}
+function ftToss(){ftLines=Array.from({length:6},()=>Math.random()<.5);ftG=rnd2(GUAS.length);render()}
+
+/* ---------- actions ---------- */
+function setPat(k){pat=k;run=0;render()}
+function go(v){
+  if(v!=='vault'&&vKey){vKey=null;vEntries=[];vMoods=[];vSalt='';vDraft='';vErr='';clearTimeout(vTimer);vTimer=null}
+  run=0;vErr='';
+  if(v!=='breathe'){run=0;mRun=0;mI=0;mPh='';mvRun=0;mvI=0;mvLeft=0;rel='home';killAudio()}
+  tab=v;render();window.scrollTo(0,0);
+}
+function submit(){
+  const text=$('#txt').value.trim();if(!text)return;
+  const e={id:Date.now(),date:$('#dt').value||today(),mood,text,thread:[],stress:null,emotion:'',meditate:false,err:''};
+  S.entries.push(e);draft='';S.draft='';save();cur=e.id;turn(e);
+}
+function sendReply(){const v=$('#rep').value.trim();if(!v)return;const e=S.entries.find(x=>x.id===cur);e.thread.push({r:'me',t:v});turn(e)}
+function retry(){turn(S.entries.find(x=>x.id===cur))}
+function finish(){const e=S.entries.find(x=>x.id===cur);if(e){e.done=true;save()}render();window.scrollTo(0,0)}
+function newEntry(){cur=null;mood={e:'😐',k:'mo_normal'};render()}
+function delE(id){if(!confirm(t('vdelconf')))return;S.entries=S.entries.filter(e=>e.id!==id);if(cur===id)cur=null;save();render()}
+function wipe(){
+  if(!confirm(t('conf')))return;
+  S={entries:[],lang:S.lang,userKey:S.userKey,favs:S.favs,report:null};draft='';
+  localStorage.removeItem(VKEY);vKey=null;vEntries=[];vMoods=[];vSalt='';vErr='';clearTimeout(vTimer);
+  cur=null;save();render();
+}
+
+function render(){
+  const V={write:vWrite,history:vHistory,vault:vVault,report:vReport,fortune:vFortune,breathe:vBreathe,settings:vSettings};
+  const n=streak();
+  const tabs=[['write','✍️'],['history','📚'],['vault',vKey?'🔓':'🔒'],['report','📊'],['fortune','🔮'],['breathe','🌿'],['settings','⚙️']];
+  $('#nav').innerHTML=`<h1>Jotly</h1><small>心迹智析</small>`+tabs.map(([k,i])=>`<button data-k="${k}" class="${k===tab?'on':''}" onclick="go('${k}')">${i} ${t(k)}</button>`).join('')+`<div class="streak">🔥 ${n} ${t('streak')}</div>`;
+  const ban='';
+  $('#view').innerHTML=ban+V[tab]()+(tab==='write'||tab==='report'?`<p class="muted" style="margin-top:28px">${t('disc')}</p>`:'');
+  document.documentElement.lang=S.lang==='zh'?'zh-CN':'en';
+}
+render();
+</script>
+
+</body></html>
